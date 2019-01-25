@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+//创建房间
+message CreateRoomReq {
+    string gameName = 1;
+    bytes config = 2;
+}
+
+//创建房间回复
+message CreateRoomRes {
+    int64 roomId = 1;
+}
+
+//加入房间请求
+message JoinRoomReq {
+    int64 roomId = 1;
+}
+
+//加入房间回复
+message JoinRoomRes {
+    string gameName = 1;
+     bytes roomData = 2;
+}
+
+//强制解散房间
+message ForceDisRoomReq {
+    int64 roomId = 1;
+}
+message ForceDisRoomRes {}
+
+//申请解散房卡房间
+message DisCardRoomReq {}
+
+message DisCardRoomRes {
+    int64 uid = 1;
+    repeated DisbandData disbandData = 2;
+}
+
+message DisCardRoomVoteReq {
+    Vote vote = 1;
+}
+
+message DisCardRoomVoteRes {
+    DisbandData disbandData = 1;
+}
+
+message DisbandData {
+    int64 uid = 1;
+    DisbandStatus status = 2;
+}
+
+message RoomClosed {
+    string reason = 1;
+}
+
+message PlayerOnline {
+    int64 uid = 1;
+}
+
+message ExitRoomReq {}
+
+message ExitRoomRes {
+    int64 uid = 1;
+}
+
+message SitDownReq {
+    int32 seat = 1;
+}
+
+message SitDownRes {
+    bytes playerData = 1;
+}
+
+message GetUpReq {}
+
+message GetUpRes {
+    int64 uid = 1;
+}
+
+message PlayerExit {
+    int64 uid = 1;
+}
+
+enum DisbandStatus{
+    /**
+         * 默认状态
+         */
+    Def = 0;
+    /**
+     * 等待回应状态
+     */
+    Wait = 1;
+    /**
+     * 同意状态
+     */
+    Agree = 2;
+    /**
+     * 拒绝状态
+     */
+    Refuse = 3;
+}
+
+enum Vote {
+
+    //同意票
+    ConsentVote = 0;
+    //反对票
+    AgainstVote = 1;
+}
+
+enum RoomType {
+    unknown = 0;
+    card = 1;
+    gold = 2;
+}

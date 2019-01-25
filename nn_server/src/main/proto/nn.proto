@@ -1,0 +1,141 @@
+syntax = "proto3";
+import "room_msg.proto";
+
+message RoomConfig {
+    int32 personNum = 1;//人数
+    int32 playWay = 2;//玩法
+    int32 baseScore = 3;//底分
+    int32 betMultiple = 4; //下注倍数
+    int32 rushMultiple = 5;//抢庄倍数
+    int32 doublingRule = 6;//翻倍规则
+    int32 startMode = 7;//开始模式
+    bool joinHalfWay = 8;//中途加入游戏
+    bool szn = 9;
+    bool thn = 10;
+    bool whn = 11;
+    bool hln = 12;
+    bool zdn = 13;
+    bool wxn = 14;
+    bool ths = 15;
+    string type = 16;
+    int32 round = 17;
+}
+
+//抢庄
+message IndicateRush {
+    int32 time = 1;
+}
+
+message RushReq {
+    int32 mul = 1;
+}
+
+message RushRes {
+    int32 mul = 1;
+    int64 uid = 2;
+}
+
+//下注
+message IndicateBet {
+    int32 time = 1;
+}
+
+message BetReq {
+    int32 bet = 1;
+}
+
+message IndicateDeal{
+    repeated DealData dealData = 1;
+}
+
+message BetRes {
+    int32 bet = 1;
+    int64 uid = 2;
+}
+
+//通知本局庄家
+message Banker {
+    int64 uid = 1;
+}
+
+//通知算牌
+message CalcCard {
+    int32 time = 1;
+}
+
+message CheckReq{}
+
+message CheckRes{
+    int64 uid = 1;
+}
+
+message HandCard {
+    int32 seat = 1;
+    repeated int32 hands = 2;
+    int32 niu = 3;
+    Result result = 4;
+    int32 score = 5;
+}
+
+
+//房间数据
+message RoomData{
+    int64 id = 1;
+    int64 ownerId = 2;
+    bool closed = 3;
+    RoomType roomType = 4;
+    bool gameStart = 5;
+    bool cardRoundStart = 6;
+    int32 round = 7;
+    RoomConfig config = 8;
+    repeated PlayerData playerData = 9;
+}
+
+message DealData{
+    int64 uid = 1;
+    int32 size = 2;
+    repeated int32 pokers = 3;
+}
+
+message PlayerData {
+    int64 uid = 1;
+    string nickname = 2;
+    string headImg = 3;
+    int32 seat = 4;
+    bool offline = 5;
+    bool ready = 6;
+    bool inGame = 7;
+    DisbandStatus disbandStatus = 8;
+    RushStatus rushStatus = 9;
+    BetStatus betStatus = 10;
+    CheckStatus checkStatus = 11;
+    int32 handCardSize = 12;
+    repeated int32 openCards = 13;
+}
+
+enum Result{
+    draw = 0;//没有输赢,平局
+    win = 1;//赢了
+    lose = 2;//输了
+}
+
+enum RushStatus {
+    DefRush = 0;
+    WaitRush = 1;
+    NegativeRush = 2;
+    PositiveRush = 3;
+}
+
+enum BetStatus {
+    DefBet = 0;
+    WaitBet = 1;
+    Bet = 2;
+}
+enum CheckStatus {
+    DefCheck = 0;
+    WaitCheck = 1;
+    Checked = 2;
+}
+
+
+

@@ -1,0 +1,46 @@
+server:
+  port: 3001
+spring:
+  application:
+    name: gate
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 2s
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        max-wait: -1ms
+        min-idle: 0
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+eureka:
+  instance:
+    ip-address: 192.168.0.112
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 15
+    lease-expiration-duration-in-seconds: 20
+    prefer-ip-address: true
+    metadata-map:
+      id: 1
+      port: ${gate.netty.port}
+  client:
+    registry-fetch-interval-seconds: 15
+    initial-instance-info-replication-interval-seconds: 15
+    instance-info-replication-interval-seconds: 15
+    service-url:
+      defaultZone: http://localhost:1010/eureka/
+redisson:
+  address: redis://localhost:6379
+gate:
+  login-timeout: 30
+  netty:
+    port: 4001
+    reader-idle-time-seconds: 20
+    all-idle-time-seconds: 10
+    executor-thread-pool-size: 3

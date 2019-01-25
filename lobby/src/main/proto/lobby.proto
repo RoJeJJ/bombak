@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message UserInfoRequest {}
+
+message UserInfoResponse {
+    int64 id = 1;
+    string account = 2;
+    string nickname = 3;
+    string headImg = 4;
+    int32 sex = 5;
+    int64 card = 6;
+    int64 gold = 7;
+}

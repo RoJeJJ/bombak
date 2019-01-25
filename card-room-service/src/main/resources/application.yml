@@ -1,0 +1,20 @@
+server:
+  port: 6001
+spring:
+  application:
+    name: room-service
+eureka:
+  instance:
+    ip-address: 192.168.0.112
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 15
+    lease-expiration-duration-in-seconds: 20
+    prefer-ip-address: true
+    metadata-map:
+      id: 1
+  client:
+    registry-fetch-interval-seconds: 15
+    initial-instance-info-replication-interval-seconds: 15
+    instance-info-replication-interval-seconds: 15
+    service-url:
+      defaultZone: http://127.0.0.1:1010/eureka/

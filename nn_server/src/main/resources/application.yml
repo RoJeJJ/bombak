@@ -1,0 +1,59 @@
+server:
+  port: 7001
+spring:
+  application:
+    name: nn_card
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 2s
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        max-wait: -1ms
+        min-idle: 0
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+redisson:
+  address: redis://localhost:6379
+eureka:
+  instance:
+    ip-address: 192.168.0.112
+    instance-id: ${spring.application.name}:${eureka.instance.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 15
+    lease-expiration-duration-in-seconds: 20
+    prefer-ip-address: true
+    metadata-map:
+      id: 1
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:1010/eureka/
+room:
+  executor-room-size: 5
+  max-room-size: 100
+  room-executor-size: 8
+  user-executor-size: 3
+nn:
+  room-min-gamer: 5
+  room-max-gamer: 10
+  base-score:
+    - 1
+    - 2
+    - 5
+    - 10
+    - 20
+  multi-bet-limit: 5
+  multi-rush-limit: 10
+  bet-time: 20
+  rush-time: 10
+  check-time: 10
+  round-fee:
+    10: 1
+    20: 2
+    30: 3
