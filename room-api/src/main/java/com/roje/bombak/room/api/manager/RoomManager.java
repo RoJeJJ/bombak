@@ -3,6 +3,7 @@ package com.roje.bombak.room.api.manager;
 import com.roje.bombak.common.message.InnerClientMessage;
 import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.player.Player;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.room.Room;
 
 /**
@@ -68,5 +69,5 @@ public interface RoomManager<P extends Player,R extends Room<P>> {
      * @param message 客户端消息
      * @param type 房间类型
      */
-    void createRoom(InnerClientMessage message, Constant.RoomType type);
+    void createRoom(InnerClientMessage message, RoomMsg.RoomType type);
 }

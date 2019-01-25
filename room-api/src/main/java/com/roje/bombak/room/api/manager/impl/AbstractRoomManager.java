@@ -155,16 +155,16 @@ public abstract class AbstractRoomManager<P extends Player, R extends Room<P>> i
             }
             R room = null;
             try {
-                if (type == Constant.RoomType.card) {
+                if (type == RoomMsg.RoomType.card) {
                     room = createCardRoom(message);
-                } else if (type == Constant.RoomType.gold) {
+                } else if (type == RoomMsg.RoomType.gold) {
                     room = createGoldRoom(message);
                 }
                 if (room != null) {
                     log.info("{}:{}创建成功", room.name(),room.id());
-                    if (room.roomType() == Constant.RoomType.card) {
+                    if (room.roomType() == RoomMsg.RoomType.card) {
                         cardRooms.put(room.id(),room);
-                    } else if (room.roomType() == Constant.RoomType.gold){
+                    } else if (room.roomType() == RoomMsg.RoomType.gold){
                         goldRooms.put(room.id(),room);
                     } else {
                         log.info("不支持的房间类型");
