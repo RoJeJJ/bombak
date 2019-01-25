@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+package com.roje.bombak.room.api.proto;
 //创建房间
 message CreateRoomReq {
     string gameName = 1;

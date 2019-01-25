@@ -2,9 +2,9 @@ package com.roje.bombak.room.api.processor.impl;
 
 import com.roje.bombak.common.dispatcher.CommonProcessor;
 import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.manager.RoomManager;
 import com.roje.bombak.room.api.player.Player;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.room.Room;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +24,6 @@ public class CreateCardRoomProcessor<P extends Player,R extends Room<P>> impleme
 
     @Override
     public void process(InnerClientMessage message) throws Exception {
-        roomManager.createRoom(message, Constant.RoomType.card);
+        roomManager.createRoom(message, RoomMsg.RoomType.card);
     }
 }

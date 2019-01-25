@@ -33,7 +33,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
 
     private final EventExecutor executor;
 
-    private final Constant.RoomType roomType;
+    private final RoomMsg.RoomType roomType;
 
     private final int personSize;
 
@@ -63,7 +63,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
 
     private boolean startDisband;
 
-    protected AbstractRoom(long id, long ownerId, String name, EventExecutor executor, Constant.RoomType type, int personSize,
+    protected AbstractRoom(long id, long ownerId, String name, EventExecutor executor, RoomMsg.RoomType type, int personSize,
                            RoomMessageSender sender, RoomManager roomManager, UserRedisDao userRedisDao) {
         this.id = id;
         this.ownerId = ownerId;
@@ -110,8 +110,8 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
     }
 
     @Override
-    public Constant.RoomType roomType() {
-        return null;
+    public RoomMsg.RoomType roomType() {
+        return roomType;
     }
 
     public boolean isGameStart() {
@@ -160,7 +160,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
      */
     private void startGame() {
         gameStart = true;
-        if (roomType == Constant.RoomType.card) {
+        if (roomType == RoomMsg.RoomType.card) {
             if (!cardRoundStart) {
                 cardRoundStart = true;
             }
@@ -176,10 +176,10 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
             return;
         }
         boolean start = false;
-        if (roomType == Constant.RoomType.gold) {
+        if (roomType == RoomMsg.RoomType.gold) {
             //金币房,满足人数就可以开始游戏
             start = seatPlayers.size() >= startPersonCount();
-        } else if (roomType == Constant.RoomType.card){
+        } else if (roomType == RoomMsg.RoomType.card){
             start = checkCardRoundStart();
         }
         if (start) {
@@ -192,7 +192,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
     }
 
     public void applyDisband(P player) {
-        if (roomType != Constant.RoomType.card) {
+        if (roomType != RoomMsg.RoomType.card) {
             log.info("只有房卡房才能申请解散");
             return;
         }
@@ -259,7 +259,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
     }
 
     public void disbandVote(P p, RoomMsg.Vote vote) {
-        if (roomType != Constant.RoomType.card) {
+        if (roomType != RoomMsg.RoomType.card) {
             log.info("不是房卡房,没有投票请求");
             return;
         }
@@ -308,7 +308,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
     public void exit(P p) {
         //玩家在游戏中或者房卡房玩家在牌局中,退出房间不移除玩家数据
         List<P> ps = new ArrayList<>(players.values());
-        boolean inGame = p.isInGame() || (roomType == Constant.RoomType.card && isInGame(p));
+        boolean inGame = p.isInGame() || (roomType == RoomMsg.RoomType.card && isInGame(p));
         if (inGame) {
             p.setExit(true);
             RoomMsg.PlayerExit.Builder builder = RoomMsg.PlayerExit.newBuilder();
@@ -332,7 +332,7 @@ public abstract class AbstractRoom<P extends Player> implements Room<P> {
 
     public void getUp(P p) {
         //此判断跟退出房间类似,玩家在游戏中或者房卡房玩家在牌局中,不能离开座位
-        boolean up = p.isInGame() || (roomType == Constant.RoomType.card && isInGame(p));
+        boolean up = p.isInGame() || (roomType == RoomMsg.RoomType.card && isInGame(p));
         if (up) {
             RoomMsg.GetUpRes.Builder builder = RoomMsg.GetUpRes.newBuilder();
             builder.setUid(p.uid());

@@ -9,7 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="card-room-service" />
         <module name="cluster" />
-        <module name="common" />
+        <module name="common-api" />
         <module name="gate" />
         <module name="lobby" />
         <module name="login" />
@@ -19,25 +19,16 @@
         <module name="three_card_brag" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="db" target="1.8" />
-      <module name="demo" target="1.8" />
-      <module name="proto" target="1.8" />
-      <module name="redis" target="1.8" />
-      <module name="test_1" target="1.8" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="8" />
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="card-room-service" options="" />
       <module name="cluster" options="" />
-      <module name="db" options="" />
-      <module name="demo" options="-parameters" />
       <module name="gate" options="" />
       <module name="lobby" options="" />
       <module name="login" options="" />
       <module name="nn_server" options="" />
-      <module name="proto" options="" />
       <module name="test" options="" />
     </option>
   </component>

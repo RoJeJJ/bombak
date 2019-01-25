@@ -7,8 +7,8 @@ import com.roje.bombak.nn.constant.NnConstant;
 import com.roje.bombak.nn.config.NnRoomConfig;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.proto.Nn;
-import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.manager.RoomManager;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.room.AbstractRoom;
 import com.roje.bombak.room.api.utils.RoomMessageSender;
 import io.netty.util.concurrent.EventExecutor;
@@ -58,7 +58,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     private NnProperties nnProperties;
 
-    public NnRoom(long id, long ownerId, String name, EventExecutor executor, NnRoomConfig config, Constant.RoomType type,
+    public NnRoom(long id, long ownerId, String name, EventExecutor executor, NnRoomConfig config, RoomMsg.RoomType type,
                   RoomMessageSender sender, UserRedisDao userRedisDao, RoomManager roomManager, NnProperties nnProperties) {
         super(id, ownerId, name, executor, type, config.personNum, sender, roomManager,userRedisDao);
         this.config = config;
@@ -185,7 +185,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         log.info("玩家{}抢庄,倍数{}",p.uid(),bet);
         Nn.RushRes.Builder builder = Nn.RushRes.newBuilder();
         builder.setMul(bet);
-        builder.setSeat(p.seat());
+        builder.setUid(p.uid());
         sender.send(players.values(), NnConstant.Cmd.RUSH_RES,builder.build().toByteArray());
 
         checkRush();
@@ -212,7 +212,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         log.info("玩家{}下注倍数{}",p.uid(),bet);
         Nn.BetRes.Builder builder = Nn.BetRes.newBuilder();
         builder.setBet(bet);
-        builder.setSeat(p.seat());
+        builder.setUid(p.uid());
         sender.send(players.values(),NnConstant.Cmd.BET_RES,builder.build().toByteArray());
 
         checkBet();
@@ -271,7 +271,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     private void showHandAndPoint(NnPlayer player, Nn.Result result,int score) {
         Nn.HandCard.Builder builder = Nn.HandCard.newBuilder();
         builder.addAllHands(player.hands());
-        builder.setSeat(player.seat());
+        builder.setUid(player.uid());
         builder.setNiu(player.getNiu());
         builder.setResult(result);
         builder.setScore(score);
@@ -303,14 +303,14 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     private void calcScore(NnPlayer player,boolean win) {
         if (win) {
-            if (roomType() == Constant.RoomType.card) {
+            if (roomType() == RoomMsg.RoomType.card) {
                 int score = currentMaxRush * player.getBetScore() * player.getNiu();
                 player.addScore(score);
                 banker.subScore(score);
                 showHandAndPoint(player, Nn.Result.win,score);
             }
         } else {
-            if (roomType() == Constant.RoomType.card) {
+            if (roomType() == RoomMsg.RoomType.card) {
                 int score = currentMaxRush * player.getBetScore() * player.getNiu();
                 player.subScore(score);
                 banker.addScore(score);
@@ -396,7 +396,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
         //通知房间所有人庄家的位置
         Nn.Banker.Builder builder = Nn.Banker.newBuilder();
-        builder.setSeat(banker.seat());
+        builder.setUid(banker.seat());
         sender.send(players.values(), NnConstant.Indicate.BANKER, builder.build().toByteArray());
 
         initBet();
@@ -420,7 +420,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         }
 
         //通知房间内的各玩家
-        List<NnPlayer> players = new ArrayList<>(this.players.values());
+//        List<NnPlayer> players = new ArrayList<>(this.players.values());
         Nn.IndicateDeal.Builder builder = Nn.IndicateDeal.newBuilder();
         for (NnPlayer p:this.players.values()) {
             builder.clear();
@@ -551,7 +551,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         builder.setId(id());
         builder.setOwnerId(ownerId());
         builder.setClosed(isClosed());
-        builder.setCardRoom(roomType().ordinal());
+        builder.setRoomType(roomType());
         builder.setGameStart(isGameStart());
         builder.setCardRoundStart(isCardRoundStart());
         builder.setRound(round);
@@ -589,7 +589,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     public void check(NnPlayer player) {
         player.setCheckFlag(Nn.CheckStatus.Checked);
         Nn.CheckRes.Builder builder = Nn.CheckRes.newBuilder();
-        builder.setSeat(player.seat());
+        builder.setUid(player.seat());
         sender.send(players.values(),NnConstant.Cmd.CHECK_RES,builder.build().toByteArray());
 
         allCheck();

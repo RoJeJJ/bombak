@@ -207,8 +207,8 @@ public class NnRoomConfig {
         builder.setStartMode(this.autoStart);
         int round = config.getRound();
         if (cardRoom) {
-            if (!nnProp.getRoundFeeMap().containsKey(round)) {
-                int defRound = Collections.min(nnProp.getRoundFeeMap().keySet());
+            if (!nnProp.getRoundFee().containsKey(round)) {
+                int defRound = Collections.min(nnProp.getRoundFee().keySet());
                 log.warn("局数设置错误:{},设置为默认局数{}",round, defRound);
                 round = defRound;
             }

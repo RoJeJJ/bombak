@@ -1,7 +1,6 @@
 package com.roje.bombak.room.api.manager;
 
 import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.player.Player;
 import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.room.Room;

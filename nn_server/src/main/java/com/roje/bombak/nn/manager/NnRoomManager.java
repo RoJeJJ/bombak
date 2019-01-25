@@ -15,6 +15,7 @@ import com.roje.bombak.room.api.executor.RoomCreateExecutorGroup;
 import com.roje.bombak.room.api.executor.UserExecutorGroup;
 import com.roje.bombak.room.api.manager.RoomIdGenerator;
 import com.roje.bombak.room.api.manager.impl.AbstractRoomManager;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.redis.RoomRedisDao;
 import com.roje.bombak.room.api.utils.RoomMessageSender;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
@@ -71,7 +72,7 @@ public class NnRoomManager extends AbstractRoomManager<NnPlayer, NnRoom> {
         NnRoomConfig nnConfig = new NnRoomConfig(config,true,nnProperties);
         long id = roomIdGenerator.getId();
         String name = "牛牛房卡房" + id;
-        return new NnRoom(id,message.getUid(),name,roomExecutorGroup.next(),nnConfig,true,
+        return new NnRoom(id,message.getUid(),name,roomExecutorGroup.next(),nnConfig, RoomMsg.RoomType.card,
                 sender,userRedisDao,this,nnProperties);
     }
 

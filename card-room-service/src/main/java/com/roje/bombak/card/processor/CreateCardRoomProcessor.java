@@ -5,7 +5,6 @@ import com.roje.bombak.common.dispatcher.CommonProcessor;
 import com.roje.bombak.common.message.InnerClientMessage;
 import com.roje.bombak.common.utils.MessageSender;
 import com.roje.bombak.room.api.constant.Constant;
-import com.roje.bombak.room.api.proto.RoomMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.amqp.core.AmqpTemplate;
