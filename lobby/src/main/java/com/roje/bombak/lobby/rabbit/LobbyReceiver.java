@@ -1,8 +1,11 @@
 package com.roje.bombak.lobby.rabbit;
 
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.message.InnerClientMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.api.dispatcher.CommonProcessor;
+import com.roje.bombak.common.api.dispatcher.Dispatcher;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.mq.Receiver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -12,26 +15,18 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class LobbyReceiver {
+public class LobbyReceiver extends Receiver {
 
-    private final Dispatcher<CommonProcessor> dispatcher;
-
-    LobbyReceiver(Dispatcher<CommonProcessor> dispatcher) {
-        this.dispatcher = dispatcher;
+    public LobbyReceiver(Dispatcher<CommonProcessor> dispatcher) {
+        super(dispatcher);
     }
 
     @RabbitListener(queues = "lobby-1")
-    public void onMessage(InnerClientMessage message) {
-        System.out.println(message);
-        CommonProcessor processor = dispatcher.processor(message.getMessageId());
-        if (processor != null) {
-            try {
-                processor.process(message);
-            } catch (Exception e) {
-                log.info("大厅消息处理消息异常,消息号:"+message.getMessageId(), e);
-            }
-        } else {
-            log.warn("消息号:{},没有被处理",message.getMessageId());
+    public void onMessage(byte[] data) {
+        try {
+            innerC2SMessage(data);
+        } catch (Exception e) {
+            log.info("大厅消息处理消息异常", e);
         }
     }
 }

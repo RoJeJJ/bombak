@@ -1,6 +1,7 @@
 package com.roje.bombak.gate.session.impl;
 
 import com.google.protobuf.Message;
+import com.roje.bombak.common.api.ServerMsg;
 import com.roje.bombak.gate.session.GateSession;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +74,7 @@ public class DefaultGateSession implements GateSession {
     }
 
     @Override
-    public void send(Message message) {
+    public void send(ServerMsg.S2CMessage message) {
         if (channel != null && channel.isActive()) {
             channel.writeAndFlush(message);
         }

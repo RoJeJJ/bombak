@@ -1,7 +1,7 @@
 package com.roje.bombak.room.api;
 
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.api.dispatcher.Dispatcher;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
 import com.roje.bombak.room.api.config.RoomProperties;
 import com.roje.bombak.room.api.executor.RoomCreateExecutorGroup;
 import com.roje.bombak.room.api.executor.UserExecutorGroup;

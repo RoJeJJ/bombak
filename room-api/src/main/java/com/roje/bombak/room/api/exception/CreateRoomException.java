@@ -1,6 +1,6 @@
 package com.roje.bombak.room.api.exception;
 
-import com.roje.bombak.common.exception.SystemException;
+import com.roje.bombak.common.api.exception.SystemException;
 
 /**
  * @author pc

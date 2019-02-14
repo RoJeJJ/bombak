@@ -1,7 +1,7 @@
 package com.roje.bombak.gate.processor;
 
 
-import com.roje.bombak.gate.proto.Gate;
+import com.roje.bombak.common.api.ServerMsg;
 import com.roje.bombak.gate.session.GateSession;
 
 
@@ -17,5 +17,5 @@ public interface GateProcessor {
      * @param message 消息包
      * @throws Exception 处理异常
      */
-    void process(GateSession session, Gate.ClientMessage message) throws Exception;
+    void process(GateSession session, ServerMsg.C2SMessage message) throws Exception;
 }

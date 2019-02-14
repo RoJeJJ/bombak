@@ -1,7 +1,7 @@
 package com.roje.bombak.room.api.processor.impl;
 
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.message.InnerClientMessage;
+import com.roje.bombak.common.api.dispatcher.CommonProcessor;
+import com.roje.bombak.common.api.message.InnerClientMessage;
 
 /**
  * 后台强制解散房间,不管是否在游戏中

@@ -1,9 +1,9 @@
 package com.roje.bombak.nn.manager;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.redis.dao.UserRedisDao;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.nn.config.NnProperties;
 import com.roje.bombak.nn.config.NnRoomConfig;
 import com.roje.bombak.nn.player.NnPlayer;

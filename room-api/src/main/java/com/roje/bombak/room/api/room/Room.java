@@ -1,6 +1,6 @@
 package com.roje.bombak.room.api.room;
 
-import com.roje.bombak.common.message.InnerClientMessage;
+import com.roje.bombak.common.api.message.InnerClientMessage;
 import com.roje.bombak.room.api.player.Player;
 import com.roje.bombak.room.api.proto.RoomMsg;
 import io.netty.util.concurrent.EventExecutor;

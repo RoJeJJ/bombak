@@ -1,7 +1,7 @@
 package com.roje.bombak.nn;
 
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.utils.InitUtil;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.utils.InitUtil;
 import com.roje.bombak.nn.config.NnProperties;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;

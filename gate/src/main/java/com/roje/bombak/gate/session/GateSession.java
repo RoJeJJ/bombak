@@ -2,6 +2,7 @@ package com.roje.bombak.gate.session;
 
 
 import com.google.protobuf.Message;
+import com.roje.bombak.common.api.ServerMsg;
 
 /**
  * @author pc
@@ -28,7 +29,7 @@ public interface GateSession {
      * 发送消息
      * @param message msg
      */
-    void send(Message message);
+    void send(ServerMsg.S2CMessage message);
 
     /**
      * 判断是否登录

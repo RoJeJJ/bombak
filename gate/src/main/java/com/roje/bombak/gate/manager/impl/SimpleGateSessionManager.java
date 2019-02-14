@@ -1,7 +1,7 @@
 package com.roje.bombak.gate.manager.impl;
 
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.redis.dao.UserRedisDao;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.gate.manager.GateSessionManager;
 import com.roje.bombak.gate.session.GateSession;
 import lombok.extern.slf4j.Slf4j;

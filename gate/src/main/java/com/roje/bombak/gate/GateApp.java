@@ -1,13 +1,11 @@
 package com.roje.bombak.gate;
 
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.service.ServerService;
-import com.roje.bombak.common.utils.InitUtil;
+import com.roje.bombak.common.api.dispatcher.Dispatcher;
+import com.roje.bombak.common.api.service.ServerService;
+import com.roje.bombak.common.api.utils.InitUtil;
 import com.roje.bombak.gate.config.GateProperties;
 import com.roje.bombak.gate.processor.GateProcessor;
 import com.roje.bombak.gate.service.GateNettyTcpServiceImpl;
-import org.springframework.amqp.core.Queue;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

@@ -1,8 +1,8 @@
 package com.roje.bombak.login.service.impl;
 
-import com.roje.bombak.common.model.User;
-import com.roje.bombak.common.model.impl.SimpleUser;
-import com.roje.bombak.common.redis.dao.UserRedisDao;
+import com.roje.bombak.common.api.model.User;
+import com.roje.bombak.common.api.model.impl.SimpleUser;
+import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.login.response.ResponseData;
 import com.roje.bombak.login.service.UserService;
 import lombok.extern.slf4j.Slf4j;

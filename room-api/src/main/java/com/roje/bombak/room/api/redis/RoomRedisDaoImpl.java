@@ -1,6 +1,6 @@
 package com.roje.bombak.room.api.redis;
 
-import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
 import com.roje.bombak.room.api.constant.Constant;
 import org.springframework.data.redis.core.RedisTemplate;
 

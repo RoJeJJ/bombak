@@ -1,6 +1,6 @@
 package com.roje.bombak.nn.processor;
 
-import com.roje.bombak.common.annotation.Message;
+import com.roje.bombak.common.api.annotation.Message;
 import com.roje.bombak.nn.constant.NnConstant;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.room.NnRoom;

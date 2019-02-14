@@ -1,7 +1,7 @@
 package com.roje.bombak.nn.room;
 
 import com.google.protobuf.Message;
-import com.roje.bombak.common.redis.dao.UserRedisDao;
+import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.nn.config.NnProperties;
 import com.roje.bombak.nn.constant.NnConstant;
 import com.roje.bombak.nn.config.NnRoomConfig;

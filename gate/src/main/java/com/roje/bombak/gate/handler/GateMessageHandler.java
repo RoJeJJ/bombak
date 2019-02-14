@@ -1,19 +1,16 @@
 package com.roje.bombak.gate.handler;
 
-import com.roje.bombak.common.constant.GlobalConstant;
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.api.constant.GlobalConstant;
+import com.roje.bombak.common.api.dispatcher.Dispatcher;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.utils.MessageSender;
 import com.roje.bombak.gate.config.GateProperties;
 import com.roje.bombak.gate.constant.GateConstant;
 import com.roje.bombak.gate.manager.GateSessionManager;
 import com.roje.bombak.gate.processor.GateProcessor;
-import com.roje.bombak.gate.proto.Gate;
 import com.roje.bombak.gate.session.GateSession;
 import com.roje.bombak.gate.session.impl.DefaultGateSession;
-import com.roje.bombak.gate.util.GateMessageUtil;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -39,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Component
 @ChannelHandler.Sharable
-public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientMessage> {
+public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2SMessage> {
 
     private static final AttributeKey<GateSession> GATE_SESSION_ATTR = AttributeKey.newInstance("netty.channel.gate.session");
 
@@ -109,7 +106,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientM
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, Gate.ClientMessage message) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, ServerMsg.C2SMessage message) throws Exception {
         GateSession session = ctx.channel().attr(GATE_SESSION_ATTR).get();
         if (session == null || session.isClosed()) {
             log.info("session closed");
@@ -117,23 +114,23 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientM
         }
         boolean gateService = StringUtils.equalsIgnoreCase(gateInfo.getServiceType(),message.getServiceType());
 
-        if (!gateService || message.getMessageId() != GateConstant.HEART_BEAT_RES) {
+        if (!gateService || message.getMessageId() != GateConstant.Cmd.HEART_BEAT_RES) {
             if (!session.checkSerial(message.getSerial())) {
                 log.info("序列号错误");
-                session.send(GateMessageUtil.buildErrorMessage(message, GateConstant.LOGIN_RES, GateConstant.ErrorCode.SERIAL_NUMBER_ERROR));
+                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.SERIAL_NUMBER_ERROR));
                 return;
             }
         }
-        if (gateService && message.getMessageId() == GateConstant.LOGIN_REQ) {
+        if (gateService && message.getMessageId() == GateConstant.Cmd.LOGIN_REQ) {
             if (session.isLogged()) {
                 log.info("已经登录了");
-                session.send(GateMessageUtil.buildErrorMessage(message, GateConstant.LOGIN_RES, GateConstant.ErrorCode.LOGIN_REPEAT));
+                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.LOGIN_REPEAT));
                 return;
             }
         } else {
             if (!session.isLogged()) {
                 log.info("还有没有登录");
-                session.send(GateMessageUtil.buildErrorMessage(message, GateConstant.LOGIN_RES, GateConstant.ErrorCode.NOT_LOGIN));
+                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.NOT_LOGIN));
                 return;
             }
         }
@@ -148,18 +145,16 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientM
             //其他服务消息
             ServiceInstance instance = loadBalancerClient.choose(message.getServiceType());
             if (instance != null) {
-                InnerClientMessage innerMessage = new InnerClientMessage();
-                innerMessage.setTimestamp(message.getTimestamp());
-                innerMessage.setSenderServiceType(gateInfo.getServiceType());
-                innerMessage.setSenderServiceId(gateInfo.getServiceId());
-                innerMessage.setUid(session.uid());
-                innerMessage.setMessageId(message.getMessageId());
-                innerMessage.setContent(message.getData().toByteArray());
+                ServerMsg.InnerC2SMessage.Builder builder = ServerMsg.InnerC2SMessage.newBuilder();
+                builder.setCsMessage(message)
+                        .setSenderType(gateInfo.getServiceType())
+                        .setSenderId(gateInfo.getServiceId())
+                        .setUid(session.uid());
                 String routeKey = message.getServiceType() + "-" + instance.getMetadata().get("id");
-                amqpTemplate.convertAndSend(routeKey, innerMessage);
+                amqpTemplate.convertAndSend(routeKey, builder.build().toByteArray());
             } else {
                 log.info("服务暂不可用");
-                session.send(GateMessageUtil.buildErrorMessage(message, GateConstant.LOGIN_RES, GateConstant.ErrorCode.SERVICE_NOT_AVAILABLE));
+                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.SERVICE_NOT_AVAILABLE));
             }
         }
     }
@@ -172,7 +167,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientM
             switch (event.state()) {
                 case ALL_IDLE:
                     log.info("数据读写超时,发送心跳请求");
-                    heartBeat(ctx.channel());
+                    session.send(sender.buildMessage(GateConstant.Cmd.HEART_BEAT_REQ));
                     break;
                 case READER_IDLE:
                     log.info("读超时,客户端可能挂了,关闭连接");
@@ -183,14 +178,6 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<Gate.ClientM
             }
         }
         ctx.fireUserEventTriggered(evt);
-    }
-
-    private void heartBeat(Channel channel) {
-        Gate.ServerMessage.Builder builder = Gate.ServerMessage.newBuilder();
-        builder.setMessageId(GateConstant.HEART_BEAT_REQ);
-        builder.setServiceType(gateInfo.getServiceType());
-        builder.setTimestamp(System.currentTimeMillis());
-        channel.writeAndFlush(builder.build());
     }
 
 

@@ -1,10 +1,12 @@
 package com.roje.bombak.card.processor;
 
-import com.roje.bombak.common.annotation.Message;
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.api.annotation.Message;
+import com.roje.bombak.common.api.dispatcher.CommonProcessor;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.utils.MessageSender;
 import com.roje.bombak.room.api.constant.Constant;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Component;
  **/
 @Slf4j
 @Component
-@Message(id = Constant.CREATE_CARD_ROOM_REQ)
+@Message(id = Constant.Cmd.CREATE_CARD_ROOM_REQ)
 public class CreateCardRoomProcessor implements CommonProcessor {
 
     private final LoadBalancerClient loadBalancerClient;
@@ -36,8 +38,8 @@ public class CreateCardRoomProcessor implements CommonProcessor {
     }
 
     @Override
-    public void process(InnerClientMessage message) throws Exception {
-        RoomMsg.CreateRoomReq request = RoomMsg.CreateRoomReq.parseFrom(message.getContent());
+    public void process(ServerMsg.InnerC2SMessage message) throws Exception {
+        RoomMsg.CreateRoomReq request = message.getCsMessage().getData().unpack(RoomMsg.CreateRoomReq.class);
         String gameName = request.getGameName();
         if (StringUtils.isBlank(gameName)) {
             log.info("房间类型不能为空");
@@ -50,8 +52,7 @@ public class CreateCardRoomProcessor implements CommonProcessor {
             messageSender.sendError(message,Constant.ErrorCode.NO_SUCH_GAME);
             return;
         }
-        message.setContent(request.getConfig().toByteArray());
         String routeKey = instance.getServiceId() + "-" +instance.getMetadata().get("id");
-        amqpTemplate.convertAndSend(routeKey,message);
+        amqpTemplate.convertAndSend(routeKey,message.toByteArray());
     }
 }

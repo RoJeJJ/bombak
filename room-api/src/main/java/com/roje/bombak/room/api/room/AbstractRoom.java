@@ -1,9 +1,9 @@
 package com.roje.bombak.room.api.room;
 
 import com.google.protobuf.Message;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.model.User;
-import com.roje.bombak.common.redis.dao.UserRedisDao;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.model.User;
+import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.manager.RoomManager;
 import com.roje.bombak.room.api.player.Player;

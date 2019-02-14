@@ -1,6 +1,6 @@
 package com.roje.bombak.room.api.executor;
 
-import com.roje.bombak.common.thread.NamedThreadFactory;
+import com.roje.bombak.common.api.thread.NamedThreadFactory;
 import io.netty.util.concurrent.DefaultEventExecutor;
 import io.netty.util.concurrent.EventExecutor;
 

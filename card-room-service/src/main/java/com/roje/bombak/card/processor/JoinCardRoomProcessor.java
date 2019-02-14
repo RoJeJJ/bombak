@@ -1,11 +1,13 @@
 package com.roje.bombak.card.processor;
 
-import com.roje.bombak.common.annotation.Message;
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.api.annotation.Message;
+import com.roje.bombak.common.api.dispatcher.CommonProcessor;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.utils.MessageSender;
 import com.roje.bombak.room.api.constant.Constant;
+import com.roje.bombak.room.api.proto.RoomMsg;
 import com.roje.bombak.room.api.redis.RoomRedisDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -18,7 +20,7 @@ import org.springframework.stereotype.Component;
  **/
 @Slf4j
 @Component
-@Message(id = Constant.JOIN_CARD_ROOM_REQ)
+@Message(id = Constant.Cmd.JOIN_CARD_ROOM_REQ)
 public class JoinCardRoomProcessor implements CommonProcessor {
 
     private final RoomRedisDao roomRedisDao;
@@ -34,8 +36,8 @@ public class JoinCardRoomProcessor implements CommonProcessor {
     }
 
     @Override
-    public void process(InnerClientMessage message) throws Exception {
-        RoomMsg.JoinRoomReq request = RoomMsg.JoinRoomReq.parseFrom(message.getContent());
+    public void process(ServerMsg.InnerC2SMessage message) throws Exception {
+        RoomMsg.JoinRoomReq request = message.getCsMessage().getData().unpack(RoomMsg.JoinRoomReq.class);
         long roomId = request.getRoomId();
         ServiceInfo serviceInfo = roomRedisDao.getRoomService(roomId);
         if (serviceInfo == null) {

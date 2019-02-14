@@ -1,13 +1,12 @@
 package com.roje.bombak.room.api.utils;
 
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.message.InnerClientMessage;
-import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.message.InnerClientMessage;
+import com.roje.bombak.common.api.utils.MessageSender;
 import com.roje.bombak.room.api.player.Player;
 import org.springframework.amqp.core.AmqpTemplate;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author pc

@@ -1,7 +1,7 @@
 package com.roje.bombak.room.api.manager.impl;
 
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.message.InnerClientMessage;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.message.InnerClientMessage;
 import com.roje.bombak.room.api.config.RoomProperties;
 import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.exception.CreateRoomException;

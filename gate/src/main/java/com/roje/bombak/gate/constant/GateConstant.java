@@ -7,13 +7,16 @@ package com.roje.bombak.gate.constant;
  **/
 public interface GateConstant {
 
-    int LOGIN_REQ = 1001;
+    interface Cmd {
 
-    int LOGIN_RES = 1002;
+        int LOGIN_REQ = 1001;
 
-    int HEART_BEAT_REQ = 1003;
+        int LOGIN_RES = 1002;
 
-    int HEART_BEAT_RES = 1004;
+        int HEART_BEAT_REQ = 1003;
+
+        int HEART_BEAT_RES = 1004;
+    }
 
     //错误码
 

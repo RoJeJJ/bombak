@@ -1,12 +1,11 @@
 package com.roje.bombak.gate.service;
 
-import com.roje.bombak.common.service.EurekaService;
+import com.roje.bombak.common.api.service.EurekaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;

@@ -1,8 +1,8 @@
 package com.roje.bombak.room.api.utils;
 
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.message.InnerClientMessage;
+import com.roje.bombak.common.api.dispatcher.CommonProcessor;
+import com.roje.bombak.common.api.dispatcher.Dispatcher;
+import com.roje.bombak.common.api.message.InnerClientMessage;
 import com.roje.bombak.room.api.constant.Constant;
 import com.roje.bombak.room.api.manager.RoomManager;
 import com.roje.bombak.room.api.player.Player;

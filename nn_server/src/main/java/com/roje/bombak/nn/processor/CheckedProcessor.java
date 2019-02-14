@@ -1,13 +1,11 @@
 package com.roje.bombak.nn.processor;
 
-import com.roje.bombak.common.annotation.Message;
+import com.roje.bombak.common.api.annotation.Message;
 import com.roje.bombak.nn.constant.NnConstant;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.proto.Nn;
 import com.roje.bombak.nn.room.NnRoom;
 import com.roje.bombak.room.api.processor.RoomProcessor;
-import com.roje.bombak.room.api.utils.RoomMessageSender;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**

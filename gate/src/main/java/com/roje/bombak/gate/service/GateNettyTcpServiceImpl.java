@@ -1,10 +1,10 @@
 package com.roje.bombak.gate.service;
 
-import com.roje.bombak.common.service.ServerService;
-import com.roje.bombak.common.thread.NamedThreadFactory;
+import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.api.service.ServerService;
+import com.roje.bombak.common.api.thread.NamedThreadFactory;
 import com.roje.bombak.gate.config.GateProperties;
 import com.roje.bombak.gate.handler.GateMessageHandler;
-import com.roje.bombak.gate.proto.Gate;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -89,7 +89,7 @@ public class GateNettyTcpServiceImpl implements ServerService {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast(new ProtobufVarint32FrameDecoder())
-                                .addLast(new ProtobufDecoder(Gate.ClientMessage.getDefaultInstance()))
+                                .addLast(new ProtobufDecoder(ServerMsg.C2SMessage.getDefaultInstance()))
                                 .addLast(new ProtobufVarint32LengthFieldPrepender())
                                 .addLast(new ProtobufEncoder())
                                 .addLast("log", new LoggingHandler(LogLevel.INFO))

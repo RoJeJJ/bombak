@@ -1,6 +1,6 @@
 package com.roje.bombak.gate.process;
 
-import com.roje.bombak.common.annotation.Message;
+import com.roje.bombak.common.api.annotation.Message;
 import com.roje.bombak.gate.constant.GateConstant;
 import com.roje.bombak.gate.processor.GateProcessor;
 import com.roje.bombak.gate.proto.Gate;

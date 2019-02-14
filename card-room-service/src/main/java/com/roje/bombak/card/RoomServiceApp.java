@@ -1,9 +1,7 @@
 package com.roje.bombak.card;
 
-import com.roje.bombak.common.dispatcher.CommonProcessor;
-import com.roje.bombak.common.dispatcher.Dispatcher;
-import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.utils.InitUtil;
+import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.api.utils.InitUtil;
 import org.springframework.amqp.core.Queue;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
