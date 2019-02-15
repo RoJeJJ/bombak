@@ -1,10 +1,11 @@
 package com.roje.bombak.nn.processor;
 
-import com.roje.bombak.common.api.annotation.Message;
+import com.google.protobuf.Any;
+import com.roje.bombak.common.annotation.Message;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.api.constant.Constant;
-import com.roje.bombak.room.api.processor.RoomProcessor;
+import com.roje.bombak.room.common.constant.RoomConstant;
+import com.roje.bombak.room.common.processor.RoomProcessor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,10 +14,10 @@ import org.springframework.stereotype.Component;
  * @date 2019/1/25
  **/
 @Component
-@Message(id = Constant.Cmd.DISBAND_CARD_ROOM_REQ)
+@Message(id = RoomConstant.Cmd.DISBAND_CARD_ROOM_REQ)
 public class DisbandReqProcessor implements RoomProcessor<NnPlayer, NnRoom> {
     @Override
-    public void process(NnRoom room, NnPlayer player, byte[] data) throws Exception {
+    public void process(NnRoom room, NnPlayer player, Any any) throws Exception {
         room.applyDisband(player);
     }
 }

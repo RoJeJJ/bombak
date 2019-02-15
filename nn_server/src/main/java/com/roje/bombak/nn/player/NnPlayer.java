@@ -1,10 +1,13 @@
 package com.roje.bombak.nn.player;
 
 
-import com.roje.bombak.nn.config.NnRoomConfig;
-import com.roje.bombak.nn.proto.Nn;
-import com.roje.bombak.room.api.player.AbstractPlayer;
-import com.roje.bombak.room.api.proto.RoomMsg;
+import com.google.protobuf.Message;
+import com.roje.bombak.nn.config.NnSetting;
+import com.roje.bombak.nn.proto.NnMsg;
+import com.roje.bombak.nn.room.NnRoom;
+import com.roje.bombak.room.common.player.AbstractPlayer;
+import com.roje.bombak.room.common.player.Player;
+import com.roje.bombak.room.common.proto.RoomMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,9 +20,11 @@ public class NnPlayer extends AbstractPlayer {
 
     private List<Integer> hands;
 
-    private Nn.RushStatus rushFlag;
+    private RushStatus rushStatus;
 
-    private Nn.BetStatus betFlag;
+    private int rushMultiple;
+
+    private BetStatus betStatus;
 
     private int betScore;
 
@@ -27,7 +32,7 @@ public class NnPlayer extends AbstractPlayer {
 
     private List<Integer> dealCards;
 
-    private Nn.CheckStatus checkFlag;
+    private CheckStatus checkStatus;
 
     private int niu;
 
@@ -40,11 +45,8 @@ public class NnPlayer extends AbstractPlayer {
     public NnPlayer(long uid) {
         super(uid);
         hands = new ArrayList<>();
-        rushFlag = Nn.RushStatus.DefRush;
-        betFlag = Nn.BetStatus.DefBet;
         openCards = new ArrayList<>();
         dealCards = new ArrayList<>();
-        checkFlag = Nn.CheckStatus.DefCheck;
         score = 0;
     }
 
@@ -59,6 +61,9 @@ public class NnPlayer extends AbstractPlayer {
     @Override
     public void newGame() {
         hands.clear();
+        betStatus = BetStatus.def;
+        rushStatus = RushStatus.def;
+        checkStatus = CheckStatus.def;
         betScore = 0;
         openCards.clear();
         dealCards.clear();
@@ -68,20 +73,20 @@ public class NnPlayer extends AbstractPlayer {
         return new ArrayList<>(hands);
     }
 
-    public Nn.RushStatus getRushFlag() {
-        return rushFlag;
+    public RushStatus getRushStatus() {
+        return rushStatus;
     }
 
-    public void setRushFlag(Nn.RushStatus rushFlag) {
-        this.rushFlag = rushFlag;
+    public void setRushStatus(RushStatus rushFlag) {
+        this.rushStatus = rushFlag;
     }
 
-    public Nn.BetStatus getBetFlag() {
-        return betFlag;
+    public BetStatus getBetStatus() {
+        return betStatus;
     }
 
-    public void setBetFlag(Nn.BetStatus betFlag) {
-        this.betFlag = betFlag;
+    public void setBetStatus(BetStatus betFlag) {
+        this.betStatus = betFlag;
     }
 
     public int getBetScore() {
@@ -92,8 +97,9 @@ public class NnPlayer extends AbstractPlayer {
         this.betScore = betScore;
     }
 
-    public Nn.PlayerData playerData(NnPlayer p) {
-        Nn.PlayerData.Builder builder = Nn.PlayerData.newBuilder();
+    @Override
+    public Message playerData(Player p) {
+        NnMsg.PlayerData.Builder builder = NnMsg.PlayerData.newBuilder();
         builder.setUid(uid());
         if (getNickname() != null) {
             builder.setNickname(getNickname());
@@ -101,7 +107,7 @@ public class NnPlayer extends AbstractPlayer {
         if (getHeadImg() != null) {
             builder.setHeadImg(getHeadImg());
         }
-        builder.setSeat(seat());
+        builder.setSeat(getSeat());
         builder.setOffline(isOffline());
         builder.setReady(isReady());
         builder.setInGame(isInGame());
@@ -117,12 +123,12 @@ public class NnPlayer extends AbstractPlayer {
         hands.addAll(pokers);
     }
 
-    public Nn.CheckStatus getCheckFlag() {
-        return checkFlag;
+    public CheckStatus getCheckStatus() {
+        return checkStatus;
     }
 
-    public void setCheckFlag(Nn.CheckStatus checkFlag) {
-        this.checkFlag = checkFlag;
+    public void setCheckStatus(CheckStatus checkFlag) {
+        this.checkStatus = checkFlag;
     }
 
     private int totalPoint() {
@@ -147,7 +153,7 @@ public class NnPlayer extends AbstractPlayer {
         return Collections.max(hands);
     }
 
-    public void checkHand(NnRoomConfig config) {
+    public void checkHand(NnSetting config) {
         niu = 0;
         int total = totalPoint();
         Collections.sort(hands);
@@ -240,25 +246,5 @@ public class NnPlayer extends AbstractPlayer {
                 }
             }
         }
-    }
-
-    @Override
-    public void setDisbandStatus(RoomMsg.DisbandStatus status) {
-
-    }
-
-    @Override
-    public RoomMsg.DisbandStatus getDisbandStatus() {
-        return null;
-    }
-
-    @Override
-    public Nn.PlayerData playerDataToSelf() {
-        return null;
-    }
-
-    @Override
-    public Nn.PlayerData playerDataToOthers() {
-        return null;
     }
 }

@@ -1,7 +1,7 @@
 package com.roje.bombak.gate.config;
 
-import com.roje.bombak.common.api.constant.GlobalConstant;
-import com.roje.bombak.common.api.eureka.ServiceInfo;
+import com.roje.bombak.common.constant.GlobalConstant;
+import com.roje.bombak.common.eureka.ServiceInfo;
 import org.springframework.amqp.core.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;

@@ -1,6 +1,10 @@
 package com.roje.bombak.nn.rabbit;
-import com.roje.bombak.common.api.message.InnerClientMessage;
-import com.roje.bombak.nn.component.NnRabbitMessageHandler;
+import com.roje.bombak.common.processor.Dispatcher;
+import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.nn.player.NnPlayer;
+import com.roje.bombak.nn.room.NnRoom;
+import com.roje.bombak.room.common.manager.RoomManager;
+import com.roje.bombak.room.common.rabbit.GameServiceReceiver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -12,21 +16,14 @@ import org.springframework.stereotype.Component;
  **/
 @Slf4j
 @Component
-public class NnReceiver {
+public class NnReceiver extends GameServiceReceiver<NnPlayer, NnRoom> {
 
-    private final NnRabbitMessageHandler rabbitMessageHandler;
-
-    public NnReceiver(NnRabbitMessageHandler rabbitMessageHandler) {
-        this.rabbitMessageHandler = rabbitMessageHandler;
+    public NnReceiver(Dispatcher dispatcher, RoomManager<NnPlayer, NnRoom> roomManager, MessageSender sender) {
+        super(dispatcher, roomManager, sender);
     }
 
     @RabbitListener(queues = "nn-1")
-    public void onMessage(InnerClientMessage message) {
-        rabbitMessageHandler.handle(message);
+    public void onMessage(byte[] data) {
+        receiver(data);
     }
-
-//    @RabbitListener(queues = GlobalConstant.BROADCAST_QUEUE_NAME)
-//    public void onFanoutMessage(InnerClientMessage message) {
-//        roomManager.onFanoutMessage(message);
-//    }
 }

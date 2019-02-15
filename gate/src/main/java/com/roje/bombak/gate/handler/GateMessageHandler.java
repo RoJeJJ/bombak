@@ -1,10 +1,10 @@
 package com.roje.bombak.gate.handler;
 
-import com.roje.bombak.common.api.ServerMsg;
-import com.roje.bombak.common.api.constant.GlobalConstant;
-import com.roje.bombak.common.api.dispatcher.Dispatcher;
-import com.roje.bombak.common.api.eureka.ServiceInfo;
-import com.roje.bombak.common.api.utils.MessageSender;
+import com.roje.bombak.common.constant.GlobalConstant;
+import com.roje.bombak.common.processor.Dispatcher;
+import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.utils.MessageSender;
+import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.gate.config.GateProperties;
 import com.roje.bombak.gate.constant.GateConstant;
 import com.roje.bombak.gate.manager.GateSessionManager;
@@ -48,7 +48,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
 
     private final ServiceInfo gateInfo;
 
-    private final Dispatcher<GateProcessor> dispatcher;
+    private final Dispatcher dispatcher;
 
     private final AmqpTemplate amqpTemplate;
 
@@ -61,7 +61,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
 
     public GateMessageHandler(GateProperties gateConfig, ServiceInfo gateInfo,
                               AmqpTemplate amqpTemplate,
-                              Dispatcher<GateProcessor> dispatcher,
+                              Dispatcher dispatcher,
                               LoadBalancerClient loadBalancerClient,
                               GateSessionManager sessionManager,
                               MessageSender sender) {
@@ -114,23 +114,23 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
         }
         boolean gateService = StringUtils.equalsIgnoreCase(gateInfo.getServiceType(),message.getServiceType());
 
-        if (!gateService || message.getMessageId() != GateConstant.Cmd.HEART_BEAT_RES) {
+        if (message.getMessageId() != GateConstant.Cmd.HEART_BEAT_RES) {
             if (!session.checkSerial(message.getSerial())) {
                 log.info("序列号错误");
-                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.SERIAL_NUMBER_ERROR));
+                session.send(sender.scErrMsg(GateConstant.ErrorCode.SERIAL_NUMBER_ERROR));
                 return;
             }
         }
         if (gateService && message.getMessageId() == GateConstant.Cmd.LOGIN_REQ) {
             if (session.isLogged()) {
                 log.info("已经登录了");
-                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.LOGIN_REPEAT));
+                session.send(sender.scErrMsg(GateConstant.ErrorCode.LOGIN_REPEAT));
                 return;
             }
         } else {
             if (!session.isLogged()) {
                 log.info("还有没有登录");
-                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.NOT_LOGIN));
+                session.send(sender.scErrMsg(GateConstant.ErrorCode.NOT_LOGIN));
                 return;
             }
         }
@@ -145,16 +145,16 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
             //其他服务消息
             ServiceInstance instance = loadBalancerClient.choose(message.getServiceType());
             if (instance != null) {
-                ServerMsg.InnerC2SMessage.Builder builder = ServerMsg.InnerC2SMessage.newBuilder();
+                ServerMsg.ForwardClientMessage.Builder builder = ServerMsg.ForwardClientMessage.newBuilder();
                 builder.setCsMessage(message)
-                        .setSenderType(gateInfo.getServiceType())
-                        .setSenderId(gateInfo.getServiceId())
+                        .setServerType(gateInfo.getServiceType())
+                        .setServerId(gateInfo.getServiceId())
                         .setUid(session.uid());
                 String routeKey = message.getServiceType() + "-" + instance.getMetadata().get("id");
                 amqpTemplate.convertAndSend(routeKey, builder.build().toByteArray());
             } else {
                 log.info("服务暂不可用");
-                session.send(sender.buildErrorMessage(message.getMessageId(), GateConstant.ErrorCode.SERVICE_NOT_AVAILABLE));
+                session.send(sender.scErrMsg(GateConstant.ErrorCode.SERVICE_NOT_AVAILABLE));
             }
         }
     }
@@ -167,7 +167,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
             switch (event.state()) {
                 case ALL_IDLE:
                     log.info("数据读写超时,发送心跳请求");
-                    session.send(sender.buildMessage(GateConstant.Cmd.HEART_BEAT_REQ));
+                    session.send(sender.scMsg(GateConstant.Cmd.HEART_BEAT_REQ));
                     break;
                 case READER_IDLE:
                     log.info("读超时,客户端可能挂了,关闭连接");
@@ -182,7 +182,7 @@ public class GateMessageHandler extends SimpleChannelInboundHandler<ServerMsg.C2
 
 
     private void sessionDisConnect(GateSession session) {
-        sender.sendFanoutMessage(session.uid(), GlobalConstant.DISCONNECT_BROADCAST);
+        sender.broadCastMessage(session.uid(), GlobalConstant.DISCONNECT_BROADCAST);
     }
 
     @Override

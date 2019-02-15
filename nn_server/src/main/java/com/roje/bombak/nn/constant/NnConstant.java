@@ -37,18 +37,18 @@ public interface NnConstant {
     /**
      * 服务器通知消息
      */
-    interface Indicate {
+    interface Notice {
 
-        int BET = 5400;
+        int BET = 5200;
 
-        int RUSH = 5401;
+        int RUSH = 5201;
 
-        int DEAL = 5402;
+        int DEAL = 5202;
 
-        int BANKER = 5403;
+        int BANKER = 5203;
 
-        int CARD_CHECK = 5404;
+        int CARD_CHECK = 5204;
 
-        int HAND_CARD = 5405;
+        int HAND_CARD = 5205;
     }
 }

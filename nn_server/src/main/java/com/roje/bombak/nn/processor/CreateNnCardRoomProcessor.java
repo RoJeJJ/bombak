@@ -1,11 +1,12 @@
 package com.roje.bombak.nn.processor;
 
-import com.roje.bombak.common.api.annotation.Message;
+import com.roje.bombak.common.annotation.Message;
+import com.roje.bombak.common.processor.RecForwardClientMessageProcessor;
+import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.api.constant.Constant;
-import com.roje.bombak.room.api.manager.RoomManager;
-import com.roje.bombak.room.api.processor.impl.CreateCardRoomProcessor;
+import com.roje.bombak.room.common.constant.RoomConstant;
+import com.roje.bombak.room.common.manager.RoomManager;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,10 +15,17 @@ import org.springframework.stereotype.Component;
  * @date 2019/1/25
  **/
 @Component
-@Message(id = Constant.Cmd.CREATE_CARD_ROOM_REQ)
-public class CreateNnCardRoomProcessor extends CreateCardRoomProcessor<NnPlayer, NnRoom> {
+@Message(id = RoomConstant.Cmd.CREATE_CARD_ROOM_REQ)
+public class CreateNnCardRoomProcessor implements RecForwardClientMessageProcessor {
+
+    private final RoomManager<NnPlayer,NnRoom> roomManager;
 
     public CreateNnCardRoomProcessor(RoomManager<NnPlayer, NnRoom> roomManager) {
-        super(roomManager);
+        this.roomManager = roomManager;
+    }
+
+    @Override
+    public void process(ServerMsg.ForwardClientMessage message) throws Exception {
+        roomManager.createRoom(message);
     }
 }

@@ -1,7 +1,7 @@
 package com.roje.bombak.gate.processor;
 
 
-import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.gate.session.GateSession;
 
 

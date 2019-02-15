@@ -4,12 +4,13 @@
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/card-room-service" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cluster" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-api" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-room" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gate" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lobby" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/login" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/nn_server" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/room-api" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/test" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/three_card_brag" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />

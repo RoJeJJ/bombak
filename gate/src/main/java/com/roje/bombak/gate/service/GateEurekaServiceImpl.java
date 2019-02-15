@@ -1,6 +1,6 @@
 package com.roje.bombak.gate.service;
 
-import com.roje.bombak.common.api.service.EurekaService;
+import com.roje.bombak.common.service.EurekaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;

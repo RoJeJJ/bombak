@@ -5,7 +5,7 @@ import com.roje.bombak.nn.constant.NnConstant;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.proto.Nn;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.api.processor.RoomProcessor;
+import com.roje.bombak.room.common.processor.RoomProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

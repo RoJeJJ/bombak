@@ -34,7 +34,7 @@
         </dependency>
         <dependency>
             <groupId>com.roje.bombak</groupId>
-            <artifactId>room-api</artifactId>
+            <artifactId>common-room</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

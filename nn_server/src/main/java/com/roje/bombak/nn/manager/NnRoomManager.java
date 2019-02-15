@@ -1,28 +1,24 @@
 package com.roje.bombak.nn.manager;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.roje.bombak.common.api.eureka.ServiceInfo;
-import com.roje.bombak.common.api.message.InnerClientMessage;
-import com.roje.bombak.common.api.redis.dao.UserRedisDao;
+import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.message.InnerClientMessage;
+import com.roje.bombak.common.proto.ServerMsg;
+import com.roje.bombak.common.utils.MessageSender;
 import com.roje.bombak.nn.config.NnProperties;
-import com.roje.bombak.nn.config.NnRoomConfig;
+import com.roje.bombak.nn.config.NnSetting;
 import com.roje.bombak.nn.player.NnPlayer;
-import com.roje.bombak.nn.proto.Nn;
+import com.roje.bombak.nn.proto.NnMsg;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.api.config.RoomProperties;
-import com.roje.bombak.room.api.exception.CreateRoomException;
-import com.roje.bombak.room.api.executor.RoomCreateExecutorGroup;
-import com.roje.bombak.room.api.executor.UserExecutorGroup;
-import com.roje.bombak.room.api.manager.RoomIdGenerator;
-import com.roje.bombak.room.api.manager.impl.AbstractRoomManager;
-import com.roje.bombak.room.api.proto.RoomMsg;
-import com.roje.bombak.room.api.redis.RoomRedisDao;
-import com.roje.bombak.room.api.utils.RoomMessageSender;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
+import com.roje.bombak.room.common.config.RoomProperties;
+import com.roje.bombak.room.common.constant.RoomConstant;
+import com.roje.bombak.room.common.exception.CreateRoomException;
+import com.roje.bombak.room.common.manager.RoomIdGenerator;
+import com.roje.bombak.room.common.manager.impl.BaseRoomManager;
+import com.roje.bombak.room.common.proto.RoomMsg;
+import com.roje.bombak.room.common.redis.RoomRedisDao;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,32 +28,17 @@ import org.springframework.stereotype.Component;
  **/
 @Slf4j
 @Component
-public class NnRoomManager extends AbstractRoomManager<NnPlayer, NnRoom> {
-
-    private final RoomIdGenerator roomIdGenerator;
-
-    private final EventExecutorGroup roomExecutorGroup;
-
-    private final UserRedisDao userRedisDao;
+public class NnRoomManager extends BaseRoomManager<NnPlayer, NnRoom> {
 
     private final NnProperties nnProperties;
 
-    protected NnRoomManager(RoomMessageSender messageSender,
-                            RoomRedisDao roomRedisDao,
-                            ServiceInfo serviceInfo,
-                            UserExecutorGroup executorGroup,
-                            @Qualifier("redissonSingle") RedissonClient redissonClient,
-                            RoomCreateExecutorGroup roomExecutor,
-                            RoomProperties roomProperties,
-                            RoomIdGenerator roomIdGenerator,
-                            UserRedisDao userRedisDao,
-                            NnProperties nnProperties) {
-        super(messageSender, roomRedisDao, serviceInfo, executorGroup, redissonClient, roomExecutor, roomProperties);
-        this.roomIdGenerator = roomIdGenerator;
-        roomExecutorGroup = new DefaultEventExecutorGroup(roomProperties.getRoomExecutorSize());
-        this.userRedisDao = userRedisDao;
+    private final RoomIdGenerator idGenerator;
+
+    protected NnRoomManager(RoomProperties roomProperties, MessageSender sender, RoomRedisDao roomRedisDao, ServiceInfo serviceInfo,
+                            RedissonClient redissonClient, NnProperties nnProperties, RoomIdGenerator idGenerator) {
+        super(roomProperties, sender, roomRedisDao, serviceInfo, redissonClient);
         this.nnProperties = nnProperties;
-        roomRedisDao.setGoldRoomNo();
+        this.idGenerator = idGenerator;
     }
 
     @Override
@@ -69,15 +50,34 @@ public class NnRoomManager extends AbstractRoomManager<NnPlayer, NnRoom> {
             e.printStackTrace();
             return null;
         }
-        NnRoomConfig nnConfig = new NnRoomConfig(config,true,nnProperties);
+        NnSetting nnConfig = new NnSetting(config,true,nnProperties);
         long id = roomIdGenerator.getId();
         String name = "牛牛房卡房" + id;
         return new NnRoom(id,message.getUid(),name,roomExecutorGroup.next(),nnConfig, RoomMsg.RoomType.card,
-                sender,userRedisDao,this,nnProperties);
+                sender,userRedisDao,this,nnProperties, nnProperties);
     }
 
     @Override
-    public NnRoom createGoldRoom(InnerClientMessage message) throws CreateRoomException {
+    protected NnRoom createRoom0(ServerMsg.ForwardClientMessage message) throws CreateRoomException {
+        NnMsg.RoomSetting roomSetting;
+        try {
+            roomSetting = message.getCsMessage().getData().unpack(NnMsg.RoomSetting.class);
+        } catch (InvalidProtocolBufferException e) {
+            log.warn("room setting 解析异常",e);
+            return null;
+        }
+        if (message.getCsMessage().getMessageId() == RoomConstant.Cmd.CREATE_CARD_ROOM_REQ) {
+            NnSetting setting = new NnSetting(roomSetting,true,nnProperties);
+            long id = idGenerator.getId();
+            String name = "牛牛房卡房";
+            return new NnRoom();
+        }
+
+        return null;
+    }
+
+    @Override
+    protected NnPlayer newPlayer(ServerMsg.ForwardClientMessage message) {
         return null;
     }
 }

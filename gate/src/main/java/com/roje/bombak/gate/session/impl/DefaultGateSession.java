@@ -1,7 +1,6 @@
 package com.roje.bombak.gate.session.impl;
 
-import com.google.protobuf.Message;
-import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.gate.session.GateSession;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,86 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package com.roje.bombak.room.common.proto;
+
+//创建房间
+message CreateRoomReq {
+    string gameName = 1;
+    bytes config = 2;
+}
+
+//创建房间回复
+message CreateRoomRes {
+    int64 roomId = 1;
+}
+
+//加入房间请求
+message JoinRoomReq {
+    int64 roomId = 1;
+}
+
+//加入房间回复
+message JoinRoomRes {
+    string gameType = 1;
+    google.protobuf.Any roomData = 2;
+}
+
+//强制解散房间
+message ForceDisRoomReq {
+    int64 roomId = 1;
+}
+message ForceDisRoomRes {}
+
+//申请解散房卡房间
+message DisCardRoomReq {}
+
+message DisCardRoomRes {
+    int64 uid = 1;
+    int32 time = 2;
+    repeated DisbandData disbandData = 3;
+}
+
+message DisCardRoomVoteReq {
+    bool vote = 1;
+}
+
+message DisCardRoomVoteRes {
+    DisbandData disbandData = 1;
+}
+
+message DisbandData {
+    int64 uid = 1;
+    int32 status = 2;
+}
+
+message RoomClosed {
+    string reason = 1;
+}
+
+message ReJoin {
+    int64 uid = 1;
+}
+
+message ExitRoomReq {}
+
+message ExitRoomRes {
+    int64 uid = 1;
+}
+
+message SitDownReq {
+    int32 seat = 1;
+}
+
+message SitDownRes {
+    google.protobuf.Any playerData = 1;
+}
+
+message GetUpReq {}
+
+message GetUpRes {
+    int64 uid = 1;
+}
+
+message PlayerExit {
+    int64 uid = 1;
+}

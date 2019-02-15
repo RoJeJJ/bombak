@@ -1,16 +1,20 @@
 package com.roje.bombak.nn.room;
 
 import com.google.protobuf.Message;
-import com.roje.bombak.common.api.redis.dao.UserRedisDao;
 import com.roje.bombak.nn.config.NnProperties;
+import com.roje.bombak.nn.config.NnSetting;
 import com.roje.bombak.nn.constant.NnConstant;
-import com.roje.bombak.nn.config.NnRoomConfig;
+import com.roje.bombak.nn.player.BetStatus;
+import com.roje.bombak.nn.player.CheckStatus;
 import com.roje.bombak.nn.player.NnPlayer;
-import com.roje.bombak.nn.proto.Nn;
-import com.roje.bombak.room.api.manager.RoomManager;
-import com.roje.bombak.room.api.proto.RoomMsg;
-import com.roje.bombak.room.api.room.AbstractRoom;
-import com.roje.bombak.room.api.utils.RoomMessageSender;
+import com.roje.bombak.nn.player.RushStatus;
+import com.roje.bombak.nn.proto.NnMsg;
+import com.roje.bombak.room.common.config.RoomProperties;
+import com.roje.bombak.room.common.room.BaseRoom;
+import com.roje.bombak.room.common.room.Room;
+import com.roje.bombak.room.common.room.RoomListener;
+import com.roje.bombak.room.common.room.RoomType;
+import com.roje.bombak.room.common.utils.RoomMessageSender;
 import io.netty.util.concurrent.EventExecutor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,13 +31,13 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/12/18
  **/
 @Slf4j
-public class NnRoom extends AbstractRoom<NnPlayer> {
+public class NnRoom extends BaseRoom<NnPlayer> {
 
     private static final int POKER_NUM = 52;
 
     private static final int MPQZ_4 = 4;
 
-    private final NnRoomConfig config;
+    private final NnSetting config;
 
     private List<Integer> pokers;
 
@@ -56,30 +61,44 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     private int round;
 
-    private NnProperties nnProperties;
+    private final NnProperties nnProperties;
 
-    public NnRoom(long id, long ownerId, String name, EventExecutor executor, NnRoomConfig config, RoomMsg.RoomType type,
-                  RoomMessageSender sender, UserRedisDao userRedisDao, RoomManager roomManager, NnProperties nnProperties) {
-        super(id, ownerId, name, executor, type, config.personNum, sender, roomManager,userRedisDao);
-        this.config = config;
-        pokers = new ArrayList<>();
-        rushGamer = new ArrayList<>();
+    private Future rushFuture;
+
+    private Future betFuture;
+
+    private Future checkFuture;
+
+    protected NnRoom(long id, long ownerId, String name, String gameType, RoomType type,
+                     RoomProperties roomProperties, NnSetting setting, EventExecutor executor,
+                     RoomMessageSender sender, RoomListener<NnPlayer, Room<NnPlayer>> listener, NnProperties nnProperties) {
+        super(id, ownerId, name, gameType, type, setting.seatSize, roomProperties.getRoomMaxPlayers(), executor, sender, listener);
+        this.config = setting;
         this.nnProperties = nnProperties;
-        round = 0;
+        rushGamer = new ArrayList<>();
+        pokers = new ArrayList<>();
     }
 
-    public NnRoomConfig config() {
+
+    public NnSetting config() {
         return config;
     }
 
-    public boolean isStartBet() {
-        return startBet;
+    @Override
+    protected void onClosed() {
+        if (rushFuture != null) {
+            rushFuture.cancel(false);
+        }
+        if (betFuture != null) {
+            betFuture.cancel(false);
+        }
+        if (checkFuture != null) {
+            checkFuture.cancel(false);
+        }
     }
 
     @Override
-    public NnPlayer newPlayer(long uid) {
-        return new NnPlayer(uid);
-    }
+    protected void initJoin(NnPlayer player) {}
 
     @Override
     protected void startGame0() {
@@ -96,21 +115,21 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         startRush = false;
         startCheck = false;
         //通知房间中所有人游戏开始
-        sender.send(players.values(), NnConstant.Cmd.START_GAME_RES);
+        sender.sendMsg(players.values(), NnConstant.Cmd.START_GAME_RES);
         executor().schedule(() -> {
             if (isClosed()) {
                 return;
             }
             switch (config.playWay) {
-                case NnRoomConfig.MPQZ:
+                case NnSetting.MPQZ:
                     log.info("开始游戏,模式:明牌抢庄");
                     deal(4);
                     break;
-                case NnRoomConfig.ZYQZ:
+                case NnSetting.ZYQZ:
                     log.info("开始游戏,模式:自由抢庄");
                     rush();
                     break;
-                case NnRoomConfig.NNSZ:
+                case NnSetting.NNSZ:
                     log.info("开始游戏,模式:牛牛上庄");
                     determineBanker();
                     break;
@@ -121,18 +140,15 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     }
 
     @Override
-    protected void initializeJoin(NnPlayer player) {}
-
-    @Override
     protected void onPlayerJoin(NnPlayer player) {
-        if (player.getRushFlag() == Nn.RushStatus.WaitRush) {
-            indicateRush(player);
+        if (startRush) {
+            noticeRush(player);
         }
-        if (player.getBetFlag() == Nn.BetStatus.WaitBet) {
-            indicateBet(player);
+        if (startBet) {
+            noticeBet(player);
         }
-        if (player.getCheckFlag() == Nn.CheckStatus.WaitCheck) {
-            indicateCheck(player);
+        if (startCheck) {
+            noticeCheck(player);
         }
     }
 
@@ -141,7 +157,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
      */
     private void initRush() {
         for (NnPlayer p : gamers) {
-            p.setRushFlag(Nn.RushStatus.WaitRush);
+            p.setRushStatus(RushStatus.wait);
         }
         startRush = true;
         startRushTime = System.currentTimeMillis();
@@ -149,21 +165,27 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     private void endRush() {
         for (NnPlayer p:gamers) {
-            p.setRushFlag(Nn.RushStatus.DefRush);
+            p.setRushStatus(RushStatus.def);
         }
         startRush = false;
+        if (rushFuture != null) {
+            rushFuture.cancel(false);
+        }
     }
 
     private void endBet() {
         for (NnPlayer p:gamers) {
-            p.setBetFlag(Nn.BetStatus.DefBet);
+            p.setBetStatus(BetStatus.def);
         }
         startBet = false;
+        if (betFuture != null) {
+            betFuture.cancel(false);
+        }
     }
 
     private void initBet() {
         for (NnPlayer p : gamers) {
-            p.setBetFlag(Nn.BetStatus.WaitBet);
+            p.setBetStatus(BetStatus.wait);
         }
         startBet = true;
         startBetTime = System.currentTimeMillis();
@@ -178,15 +200,15 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
             rushGamer.add(p);
         }
         if (bet == 0) {
-            p.setRushFlag(Nn.RushStatus.NegativeRush);
+            p.setRushStatus(RushStatus.not_rush);
         } else {
-            p.setRushFlag(Nn.RushStatus.PositiveRush);
+            p.setRushStatus(RushStatus.rush);
         }
         log.info("玩家{}抢庄,倍数{}",p.uid(),bet);
-        Nn.RushRes.Builder builder = Nn.RushRes.newBuilder();
+        NnMsg.RushRes.Builder builder = NnMsg.RushRes.newBuilder();
         builder.setMul(bet);
         builder.setUid(p.uid());
-        sender.send(players.values(), NnConstant.Cmd.RUSH_RES,builder.build().toByteArray());
+        sender.sendMsg(players.values(), NnConstant.Cmd.RUSH_RES,builder.build());
 
         checkRush();
     }
@@ -194,7 +216,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     private void checkRush() {
         boolean rush = true;
         for (NnPlayer p : gamers) {
-            if (p.getRushFlag() == Nn.RushStatus.WaitRush) {
+            if (p.getRushStatus() == RushStatus.wait) {
                 rush = false;
                 break;
             }
@@ -207,13 +229,13 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     public void bet(NnPlayer p, int bet) {
         p.setBetScore(bet);
-        p.setBetFlag(Nn.BetStatus.Bet);
+        p.setBetStatus(BetStatus.beted);
 
         log.info("玩家{}下注倍数{}",p.uid(),bet);
-        Nn.BetRes.Builder builder = Nn.BetRes.newBuilder();
+        NnMsg.BetRes.Builder builder = NnMsg.BetRes.newBuilder();
         builder.setBet(bet);
         builder.setUid(p.uid());
-        sender.send(players.values(),NnConstant.Cmd.BET_RES,builder.build().toByteArray());
+        sender.sendMsg(players.values(),NnConstant.Cmd.BET_RES,builder.build());
 
         checkBet();
     }
@@ -221,14 +243,14 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     private void checkBet() {
         boolean bet = true;
         for (NnPlayer p : gamers) {
-            if (p != banker && p.getBetFlag() == Nn.BetStatus.WaitBet) {
+            if (p != banker && p.getBetStatus() == BetStatus.wait) {
                 bet = false;
             }
         }
         //所有人下好注了
         if (bet) {
             endBet();
-            if (config.playWay == NnRoomConfig.MPQZ) {
+            if (config.playWay == NnSetting.MPQZ) {
                 deal(1);
             } else {
                 deal(5);
@@ -239,22 +261,32 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     private void checkPoker() {
         startCheck = true;
         startCheckTime = System.currentTimeMillis();
-        indicateCheck(null);
-        executor().schedule(this::checkTimeout, nnProperties.getCheckTime(), TimeUnit.SECONDS);
+        noticeCheck(null);
+        checkFuture = executor().schedule(this::checkTimeout, nnProperties.getCheckTime(), TimeUnit.SECONDS);
     }
 
     private void allCheck() {
         boolean check = true;
         for (NnPlayer p : gamers) {
-            if (p.getCheckFlag() == Nn.CheckStatus.WaitCheck) {
+            if (p.getCheckStatus() == CheckStatus.wait) {
                 check = false;
                 break;
             }
         }
         if (check) {
-            startCheck = false;
+            endCheck();
+            startCompare();
         }
-        startCompare();
+    }
+
+    private void endCheck() {
+        startCheck = false;
+        for (NnPlayer p:gamers) {
+            p.setCheckStatus(CheckStatus.def);
+        }
+        if (checkFuture != null) {
+            checkFuture.cancel(false);
+        }
     }
 
     private void startCompare() {
@@ -262,20 +294,20 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
             player.checkHand(config);
         }
 
-        showHandAndPoint(banker, Nn.Result.draw,0);
+        showHandAndPoint(banker, NnResult.def,0);
 
-        NnPlayer player = getNextPlayer(banker.seat());
+        NnPlayer player = getNextPlayer(banker.getSeat());
         comparePlayer(player);
     }
 
-    private void showHandAndPoint(NnPlayer player, Nn.Result result,int score) {
-        Nn.HandCard.Builder builder = Nn.HandCard.newBuilder();
+    private void showHandAndPoint(NnPlayer player, NnResult result,int score) {
+        NnMsg.HandCard.Builder builder = NnMsg.HandCard.newBuilder();
         builder.addAllHands(player.hands());
         builder.setUid(player.uid());
         builder.setNiu(player.getNiu());
-        builder.setResult(result);
+        builder.setResult(result.ordinal());
         builder.setScore(score);
-        sender.send(players.values(),NnConstant.Indicate.HAND_CARD,builder.build().toByteArray());
+        sender.sendMsg(players.values(), NnConstant.Notice.HAND_CARD,builder.build());
     }
 
     private void comparePlayer(NnPlayer player) {
@@ -295,7 +327,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
                 if (isClosed()) {
                     return;
                 }
-                NnPlayer player1 = getNextPlayer(banker.seat());
+                NnPlayer player1 = getNextPlayer(banker.getSeat());
                 comparePlayer(player1);
             },2000,TimeUnit.MILLISECONDS);
         }
@@ -303,25 +335,25 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     private void calcScore(NnPlayer player,boolean win) {
         if (win) {
-            if (roomType() == RoomMsg.RoomType.card) {
+            if (roomType() == RoomType.card) {
                 int score = currentMaxRush * player.getBetScore() * player.getNiu();
                 player.addScore(score);
                 banker.subScore(score);
-                showHandAndPoint(player, Nn.Result.win,score);
+                showHandAndPoint(player, NnResult.win,score);
             }
         } else {
-            if (roomType() == RoomMsg.RoomType.card) {
+            if (roomType() == RoomType.card) {
                 int score = currentMaxRush * player.getBetScore() * player.getNiu();
                 player.subScore(score);
                 banker.addScore(score);
-                showHandAndPoint(player, Nn.Result.lose,score);
+                showHandAndPoint(player, NnResult.lose,score);
             }
         }
     }
 
     private NnPlayer getNextPlayer(int seat) {
         int next = seat + 1;
-        if (next > config.personNum) {
+        if (next > config.seatSize) {
             next = 0;
         }
         NnPlayer player = getSeat(next);
@@ -334,47 +366,70 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
     /**
      * 计算剩余抢庄时间,通知玩家开始抢庄
      */
-    private void indicateRush(NnPlayer p) {
+    private void noticeRush(NnPlayer p) {
         int intervalTime = (int) (System.currentTimeMillis() - startRushTime) / 1000;
         int rushTime = nnProperties.getRushTime() - intervalTime;
         // 通知玩家开始抢庄
-        Nn.IndicateRush.Builder builder = Nn.IndicateRush.newBuilder();
+        NnMsg.NoticeRush.Builder builder = NnMsg.NoticeRush.newBuilder();
         builder.setTime(rushTime);
+        for (NnPlayer np:gamers) {
+            NnMsg.RushData.Builder rb = NnMsg.RushData.newBuilder();
+            rb.setUid(np.uid());
+            rb.setStatus(np.getRushStatus().getCode());
+            builder.addRushData(rb);
+        }
         if (p == null) {
-            sender.send(players.values(), NnConstant.Indicate.RUSH, builder.build().toByteArray());
+            sender.sendMsg(players.values(), NnConstant.Notice.RUSH, builder.build());
         } else {
-            sender.send(p, NnConstant.Indicate.RUSH, builder.build().toByteArray());
+            sender.sendMsg(p, NnConstant.Notice.RUSH, builder.build());
         }
     }
 
     /**
      * 计算剩余算牌时间,通知玩家开始算牌
      */
-    private void indicateCheck(NnPlayer p) {
+    private void noticeCheck(NnPlayer p) {
         int intervalTime = (int) (System.currentTimeMillis() - startCheckTime) / 1000;
         int calcTime = nnProperties.getCheckTime() - intervalTime;
-        Nn.CalcCard.Builder builder = Nn.CalcCard.newBuilder();
+        NnMsg.NoticeCheck.Builder builder = NnMsg.NoticeCheck.newBuilder();
         builder.setTime(calcTime);
+        for (NnPlayer np:gamers) {
+            NnMsg.CheckData.Builder cb = NnMsg.CheckData.newBuilder();
+            cb.setUid(np.uid());
+            cb.setStatus(np.getCheckStatus().getCode());
+            builder.addCheckData(cb);
+        }
         if (p == null) {
-            sender.send(players.values(), NnConstant.Indicate.CARD_CHECK, builder.build().toByteArray());
+            sender.sendMsg(players.values(), NnConstant.Notice.CARD_CHECK, builder.build());
         } else {
-            sender.send(p, NnConstant.Indicate.CARD_CHECK, builder.build().toByteArray());
+            sender.sendMsg(p, NnConstant.Notice.CARD_CHECK, builder.build());
         }
     }
 
     /**
      * 计算剩余下注时间,通知玩家开始下注
      */
-    private void indicateBet(NnPlayer player) {
+    private void noticeBet(NnPlayer player) {
         int intervalTime = (int) (System.currentTimeMillis() - startBetTime) / 1000;
         int betTime = nnProperties.getBetTime() - intervalTime;
         //通知玩家开始下注
-        Nn.IndicateBet.Builder builder = Nn.IndicateBet.newBuilder();
+        NnMsg.NoticeBet.Builder builder = NnMsg.NoticeBet.newBuilder();
         builder.setTime(betTime);
+        for (NnPlayer np:gamers) {
+            if (np != banker) {
+                NnMsg.BetData.Builder bb = NnMsg.BetData.newBuilder();
+                bb.setUid(np.uid());
+                bb.setStatus(np.getBetStatus().getCode());
+                if (np.getBetStatus() == BetStatus.beted) {
+                    bb.setBet(np.getBetScore());
+                }
+                builder.addBetData(bb);
+            }
+        }
         if (player == null) {
-            sender.send(gamers, NnConstant.Indicate.BET, builder.build().toByteArray());
+            sender.sendMsg(gamers, NnConstant.Notice.BET, builder.build());
         } else {
-            sender.send(player, NnConstant.Indicate.BET, builder.build().toByteArray());
+            sender.sendMsg(player, NnConstant.Notice.BET, builder.build());
         }
     }
 
@@ -382,8 +437,8 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
      * 确定庄家
      */
     private void determineBanker() {
-        boolean ran = (config.playWay == NnRoomConfig.NNSZ && banker == null) ||
-                config.playWay == NnRoomConfig.ZYQZ || config.playWay == NnRoomConfig.MPQZ;
+        boolean ran = (config.playWay == NnSetting.NNSZ && banker == null) ||
+                config.playWay == NnSetting.ZYQZ || config.playWay == NnSetting.MPQZ;
         if (ran) {
             if (rushGamer.size() == 0) {
                 banker = gamers.get(new Random().nextInt(gamers.size()));
@@ -395,13 +450,13 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
         }
 
         //通知房间所有人庄家的位置
-        Nn.Banker.Builder builder = Nn.Banker.newBuilder();
-        builder.setUid(banker.seat());
-        sender.send(players.values(), NnConstant.Indicate.BANKER, builder.build().toByteArray());
+        NnMsg.NoticeBanker.Builder builder = NnMsg.NoticeBanker.newBuilder();
+        builder.setUid(banker.uid());
+        sender.sendMsg(players.values(), NnConstant.Notice.BANKER, builder.build());
 
         initBet();
-        indicateBet(null);
-        executor().schedule(this::betTimeout, nnProperties.getBetTime(), TimeUnit.MILLISECONDS);
+        noticeBet(null);
+        betFuture = executor().schedule(this::betTimeout, nnProperties.getBetTime(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -421,19 +476,19 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
         //通知房间内的各玩家
 //        List<NnPlayer> players = new ArrayList<>(this.players.values());
-        Nn.IndicateDeal.Builder builder = Nn.IndicateDeal.newBuilder();
+        NnMsg.NoticeDeal.Builder builder = NnMsg.NoticeDeal.newBuilder();
         for (NnPlayer p:this.players.values()) {
             builder.clear();
             for (NnPlayer pp:gamers) {
-                Nn.DealData.Builder pd = Nn.DealData.newBuilder();
+                NnMsg.DealData.Builder pd = NnMsg.DealData.newBuilder();
                 pd.setUid(pp.uid());
                 pd.setSize(num);
-                if (p == pp && num == MPQZ_4) {
+                if (p == pp ) {
                     pd.addAllPokers(pp.dealCards());
                 }
                 builder.addDealData(pd);
             }
-            sender.send(p,NnConstant.Indicate.DEAL,builder.build().toByteArray());
+            sender.sendMsg(p, NnConstant.Notice.DEAL,builder.build());
         }
 //        for (NnPlayer p : gamers) {
 //            Nn.IndicateDeal.Builder builder = Nn.IndicateDeal.newBuilder();
@@ -446,7 +501,7 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 //                }
 //                builder.addDealData(ddb);
 //            }
-//            sender.send(p, NnConstant.Indicate.DEAL, builder.build().toByteArray());
+//            sender.send(p, NnConstant.Notice.DEAL, builder.build().toByteArray());
 //            players.remove(p);
 //        }
 //        Nn.IndicateDeal.Builder builder = Nn.IndicateDeal.newBuilder();
@@ -456,9 +511,9 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 //            db.setSize(num);
 //            builder.addDealData(db);
 //        }
-//        sender.send(players, NnConstant.Indicate.DEAL, builder.build().toByteArray());
+//        sender.send(players, NnConstant.Notice.DEAL, builder.build().toByteArray());
 
-        if (config.playWay == NnRoomConfig.MPQZ) {
+        if (config.playWay == NnSetting.MPQZ) {
             //如果玩法是明牌抢庄
             if (num == MPQZ_4) {
                 //并且是发四张牌,开始抢庄
@@ -477,8 +532,8 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
      */
     private void rush() {
         initRush();
-        indicateRush(null);
-        executor().schedule(this::rushTimeout, nnProperties.getRushTime(), TimeUnit.MILLISECONDS);
+        noticeRush(null);
+        rushFuture = executor().schedule(this::rushTimeout, nnProperties.getRushTime(), TimeUnit.MILLISECONDS);
     }
 
     public boolean isStartRush() {
@@ -489,14 +544,11 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
      * 抢庄超时处理
      */
     private void rushTimeout() {
-        if (isClosed()) {
-            return;
-        }
         if (!startRush) {
             return;
         }
         for (NnPlayer p : gamers) {
-            if (p.getRushFlag() == Nn.RushStatus.WaitRush) {
+            if (p.getRushStatus() == RushStatus.wait) {
                 //超时没有抢庄,默认不抢庄
                 rush(p,0);
             }
@@ -507,19 +559,15 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
      * 下注超时处理
      */
     private void betTimeout() {
-        if (isClosed()) {
-            return;
-        }
         if (!startBet) {
             return;
         }
         for (NnPlayer p : gamers) {
-            if (p != banker && p.getBetFlag() == Nn.BetStatus.WaitBet) {
+            if (p != banker && p.getBetStatus() == BetStatus.wait) {
                 //默认一倍下注
                 bet(p,1);
             }
         }
-        checkBet();
     }
 
     public boolean isStartCheck() {
@@ -537,32 +585,26 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
             return;
         }
         for (NnPlayer p : gamers) {
-            if (p.getCheckFlag() == Nn.CheckStatus.WaitCheck) {
+            if (p.getCheckStatus() == CheckStatus.wait) {
                 check(p);
             }
         }
-        startCheck = false;
-        startCompare();
     }
 
     @Override
     public Message roomData(NnPlayer player) {
-        Nn.RoomData.Builder builder = Nn.RoomData.newBuilder();
+        NnMsg.RoomData.Builder builder = NnMsg.RoomData.newBuilder();
         builder.setId(id());
         builder.setOwnerId(ownerId());
         builder.setClosed(isClosed());
-        builder.setRoomType(roomType());
+        builder.setRoomType(roomType().getCode());
         builder.setGameStart(isGameStart());
         builder.setCardRoundStart(isCardRoundStart());
         builder.setRound(round);
-        builder.setConfig(config().protoConfig);
+        builder.setRoomSetting(config().setting);
         for (NnPlayer p : seatPlayers.values()) {
             if (p != null) {
-                if (p != player) {
-                    builder.addPlayerData(p.playerDataToOthers());
-                } else {
-                    builder.addPlayerData(p.playerDataToSelf());
-                }
+                builder.addPlayerData((NnMsg.PlayerData) p.playerData(player));
             }
         }
         return builder.build();
@@ -575,23 +617,22 @@ public class NnRoom extends AbstractRoom<NnPlayer> {
 
     @Override
     protected boolean checkCardRoundStart() {
-        if (config.playWay == NnRoomConfig.GDZJ && banker == null) {
+        if (config.playWay == NnSetting.GDZJ && banker == null) {
             log.info("固定庄家模式下,房主不参与游戏,无法开始游戏");
             return false;
         }
-        if (config.autoStart == NnRoomConfig.ROOM_OWNER_START_GAME) {
-            return getPersonSize() >= startPersonCount();
+        if (config.autoStart == NnSetting.ROOM_OWNER_START_GAME) {
+            return seatPlayers.size() >= startPersonCount();
         } else {
-            return config.autoStart >= getPersonSize();
+            return config.autoStart >= seatPlayers.size();
         }
     }
 
     public void check(NnPlayer player) {
-        player.setCheckFlag(Nn.CheckStatus.Checked);
-        Nn.CheckRes.Builder builder = Nn.CheckRes.newBuilder();
-        builder.setUid(player.seat());
-        sender.send(players.values(),NnConstant.Cmd.CHECK_RES,builder.build().toByteArray());
-
+        player.setCheckStatus(CheckStatus.checked);
+        NnMsg.CheckRes.Builder builder = NnMsg.CheckRes.newBuilder();
+        builder.setUid(player.uid());
+        sender.sendMsg(players.values(),NnConstant.Cmd.CHECK_RES,builder.build());
         allCheck();
     }
 }

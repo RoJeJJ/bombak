@@ -1,6 +1,6 @@
 package com.roje.bombak.gate.constant;
 
-import com.roje.bombak.common.api.error.ErrorData;
+import com.roje.bombak.common.error.ErrorData;
 
 /**
  * @author pc

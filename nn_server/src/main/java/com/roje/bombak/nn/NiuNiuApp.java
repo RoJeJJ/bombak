@@ -1,7 +1,7 @@
 package com.roje.bombak.nn;
 
-import com.roje.bombak.common.api.eureka.ServiceInfo;
-import com.roje.bombak.common.api.utils.InitUtil;
+import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.utils.DispatcherUtil;
 import com.roje.bombak.nn.config.NnProperties;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 public class NiuNiuApp {
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(NiuNiuApp.class,args);
-        InitUtil.initDispatcher(context);
+        DispatcherUtil.init(context);
     }
 
     @Bean

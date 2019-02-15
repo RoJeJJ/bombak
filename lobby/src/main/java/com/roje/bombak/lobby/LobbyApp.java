@@ -1,7 +1,7 @@
 package com.roje.bombak.lobby;
 
-import com.roje.bombak.common.api.eureka.ServiceInfo;
-import com.roje.bombak.common.api.utils.InitUtil;
+import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.utils.DispatcherUtil;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Bean;
 public class LobbyApp {
     public static void main(String[] args) {
         ApplicationContext appContext = SpringApplication.run(LobbyApp.class,args);
-        InitUtil.initDispatcher(appContext);
+        DispatcherUtil.init(appContext);
     }
 
     @Bean

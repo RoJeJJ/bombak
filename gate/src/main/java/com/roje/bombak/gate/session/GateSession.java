@@ -1,8 +1,7 @@
 package com.roje.bombak.gate.session;
 
 
-import com.google.protobuf.Message;
-import com.roje.bombak.common.api.ServerMsg;
+import com.roje.bombak.common.proto.ServerMsg;
 
 /**
  * @author pc

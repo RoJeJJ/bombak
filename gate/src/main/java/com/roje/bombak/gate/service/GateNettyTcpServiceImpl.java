@@ -1,8 +1,8 @@
 package com.roje.bombak.gate.service;
 
-import com.roje.bombak.common.api.ServerMsg;
-import com.roje.bombak.common.api.service.ServerService;
-import com.roje.bombak.common.api.thread.NamedThreadFactory;
+import com.roje.bombak.common.service.ServerService;
+import com.roje.bombak.common.thread.NamedThreadFactory;
+import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.gate.config.GateProperties;
 import com.roje.bombak.gate.handler.GateMessageHandler;
 import io.netty.bootstrap.ServerBootstrap;

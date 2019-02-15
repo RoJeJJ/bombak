@@ -3,10 +3,9 @@ package com.roje.bombak.nn.processor;
 import com.roje.bombak.common.api.annotation.Message;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.api.constant.Constant;
-import com.roje.bombak.room.api.manager.RoomManager;
-import com.roje.bombak.room.api.processor.impl.JoinCardRoomProcessor;
-import com.roje.bombak.room.api.utils.RoomMessageSender;
+import com.roje.bombak.room.common.constant.Constant;
+import com.roje.bombak.room.common.manager.RoomManager;
+import com.roje.bombak.room.common.utils.RoomMessageSender;
 import org.springframework.stereotype.Component;
 
 /**
