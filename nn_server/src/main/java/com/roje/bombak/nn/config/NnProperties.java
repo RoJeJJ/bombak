@@ -22,11 +22,11 @@ public class NnProperties {
 
     private int multiRushLimit = 10;
 
-    private int betTime = 20;
+    private int betSecondTime = 20;
 
-    private int rushTime = 5;
+    private int rushSecondTime = 5;
 
-    private int checkTime = 10;
+    private int checkSecondTime = 10;
 
     public Map<Integer, Integer> getRoundFee() {
         return roundFee;
@@ -67,7 +67,9 @@ public class NnProperties {
     }
 
     public void setMultiBetLimit(int multiBetLimit) {
-        this.multiBetLimit = multiBetLimit;
+        if (multiBetLimit > 0) {
+            this.multiBetLimit = multiBetLimit;
+        }
     }
 
     public int getMultiRushLimit() {
@@ -75,30 +77,38 @@ public class NnProperties {
     }
 
     public void setMultiRushLimit(int multiRushLimit) {
-        this.multiRushLimit = multiRushLimit;
+        if (multiRushLimit > 0) {
+            this.multiRushLimit = multiRushLimit;
+        }
     }
 
-    public int getBetTime() {
-        return betTime;
+    public int getBetSecondTime() {
+        return betSecondTime;
     }
 
-    public void setBetTime(int betTime) {
-        this.betTime = betTime;
+    public void setBetSecondTime(int betTime) {
+        if (betTime > 0) {
+            this.betSecondTime = betTime;
+        }
     }
 
-    public int getRushTime() {
-        return rushTime;
+    public int getRushSecondTime() {
+        return rushSecondTime;
     }
 
-    public void setRushTime(int rushTime) {
-        this.rushTime = rushTime;
+    public void setRushSecondTime(int rushTime) {
+        if (rushTime > 0) {
+            this.rushSecondTime = rushTime;
+        }
     }
 
-    public int getCheckTime() {
-        return checkTime;
+    public int getCheckSecondTime() {
+        return checkSecondTime;
     }
 
-    public void setCheckTime(int checkTime) {
-        this.checkTime = checkTime;
+    public void setCheckSecondTime(int checkTime) {
+        if (checkSecondTime > 0) {
+            this.checkSecondTime = checkTime;
+        }
     }
 }

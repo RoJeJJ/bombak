@@ -3,44 +3,47 @@ import "google/protobuf/any.proto";
 
 package com.roje.bombak.common.proto;
 
-//客户端发送到服务器的消息
-message C2SMessage{
-    int32 serial = 1;
-    int64 timestamp = 2;
-    string serviceType = 3;
-    int32 messageId = 4;
-    int32 secondMsgId = 5;
-    google.protobuf.Any data = 6;
+//客户端发送到网关的消息
+message ClientToGateMessage{
+    int32 msgType = 1;
+    string serviceType = 2;
+    int32 msgId = 3;
+    google.protobuf.Any data = 4;
 }
 
-//服务器发送给客户端的消息
-message S2CMessage{
-    int32 messageId = 1;
-    int64 timestamp = 3;
-    int32 errorCode = 4;
-    google.protobuf.Any data = 6;
+message GateToClientMessage {
+    int32 msgType = 1;
+    int32 msgId = 2;
+    int32 errCode = 3;
+    google.protobuf.Any data = 4;
 }
 
-//服务器转发客户端消息
-message ForwardClientMessage {
-    C2SMessage csMessage = 1;
-    int64 uid = 2;
-    string serverType = 3;
-    string serverId = 4;
-}
-//服务器回复客户端消息
-message ReplyClientMessage {
-    S2CMessage scMessage = 1;
-    int64 uid = 2;
-    string serverType = 3;
-    string serverId = 4;
+//网关发送给服务器的消息
+message GateToServerMessage{
+    int32 msgType = 1;
+    int64 userId = 2;
+    string sessionId = 3;
+    string serviceType = 4;
+    string serviceId = 5;
+    int32 msgId = 6;
+    google.protobuf.Any data = 7;
 }
 
-//服务器广播消息
-message ServerBroadcastMessage{
-    int32 messageId = 1;
-    int64 uid = 2;
-    string serverType = 3;
-    string serverId = 4;
+//服务器发送给网关的消息
+message ServerToGateMessage {
+    int32 msgType = 1;
+    string sessionId = 2;
+    int32 msgId = 3;
+    int32 errCode = 4;
     google.protobuf.Any data = 5;
+}
+//服务器发送给服务器的消息
+message ServerToServerMessage {
+    int32 msgType = 1;
+    int32 msgId = 2;
+    google.protobuf.Any data = 3;
+}
+
+message UserDisConnect{
+    int64 uid = 1;
 }

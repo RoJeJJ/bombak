@@ -1,9 +1,10 @@
 package com.roje.bombak.nn.processor;
 
-import com.roje.bombak.common.api.annotation.Message;
+import com.google.protobuf.Any;
+import com.roje.bombak.common.annotation.Message;
 import com.roje.bombak.nn.player.NnPlayer;
 import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.common.constant.Constant;
+import com.roje.bombak.room.common.constant.RoomConstant;
 import com.roje.bombak.room.common.processor.RoomProcessor;
 import com.roje.bombak.room.common.proto.RoomMsg;
 import org.springframework.stereotype.Component;
@@ -14,11 +15,11 @@ import org.springframework.stereotype.Component;
  * @date 2019/1/25
  **/
 @Component
-@Message(id = Constant.Cmd.DISBAND_CARD_ROOM_VOTE_REQ)
+@Message(id = RoomConstant.Cmd.DISBAND_CARD_ROOM_VOTE_REQ)
 public class DisbandVoteProcessor implements RoomProcessor<NnPlayer, NnRoom> {
     @Override
-    public void process(NnRoom room, NnPlayer player, byte[] data) throws Exception {
-        RoomMsg.DisCardRoomVoteReq voteReq = RoomMsg.DisCardRoomVoteReq.parseFrom(data);
+    public void process(NnRoom room, NnPlayer player, Any data) throws Exception {
+        RoomMsg.DisCardRoomVoteReq voteReq = data.unpack(RoomMsg.DisCardRoomVoteReq.class);
         room.disbandVote(player,voteReq.getVote());
     }
 }

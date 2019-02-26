@@ -13,9 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefaultGateSession implements GateSession {
 
-    private long uid;
+    private String id;
 
-    private int serial;
+    private long uid;
 
     private Channel channel;
 
@@ -26,7 +26,7 @@ public class DefaultGateSession implements GateSession {
     public DefaultGateSession( Channel channel) {
         this.channel = channel;
         closed = false;
-        serial = 0;
+        id = channel.id().asShortText();
     }
 
     @Override
@@ -36,22 +36,13 @@ public class DefaultGateSession implements GateSession {
     }
 
     @Override
+    public String id() {
+        return id;
+    }
+
+    @Override
     public long uid() {
         return uid;
-    }
-
-    @Override
-    public int serial() {
-        return serial;
-    }
-
-    @Override
-    public boolean checkSerial(int serial) {
-        if ( this.serial + 1 == serial) {
-            this.serial = serial;
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -73,7 +64,7 @@ public class DefaultGateSession implements GateSession {
     }
 
     @Override
-    public void send(ServerMsg.S2CMessage message) {
+    public void send(ServerMsg.GateToClientMessage message) {
         if (channel != null && channel.isActive()) {
             channel.writeAndFlush(message);
         }

@@ -1,7 +1,7 @@
 package com.roje.bombak.gate.process;
 
 import com.roje.bombak.common.annotation.Message;
-import com.roje.bombak.common.constant.GlobalConstant;
+import com.roje.bombak.common.constant.Constant;
 import com.roje.bombak.common.eureka.ServiceInfo;
 import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.common.redis.dao.UserRedisDao;
@@ -56,7 +56,7 @@ public class LoginReqProcessor implements GateProcessor {
     }
 
     @Override
-    public void process(GateSession session, ServerMsg.C2SMessage message) throws Exception {
+    public void process(GateSession session, ServerMsg.ClientToGateMessage message) throws Exception {
         GateMsg.LoginRequest request = GateMsg.LoginRequest.parseFrom(message.getData().toByteArray());
         long uid = request.getUid();
         String token = request.getToken();
@@ -96,9 +96,10 @@ public class LoginReqProcessor implements GateProcessor {
                 log.info(resp);
             }
             sessionManager.login(session,uid);
+            session.send(sender.scMsg(GateConstant.GATE_MSG,GateConstant.Cmd.LOGIN_RES));
             GateMsg.LoginResponse.Builder builder = GateMsg.LoginResponse.newBuilder();
-            session.send(sender.scMsg(GateConstant.Cmd.LOGIN_RES, builder.build()));
-            sender.broadCastMessage(uid, GlobalConstant.LOGIN_BROADCAST);
+            builder.setUid(uid);
+            sender.allServerMsg(GateConstant.GATE_MSG, Constant.Cmd.LOGIN_BROADCAST,builder.build());
         } finally {
             lock.unlock();
         }

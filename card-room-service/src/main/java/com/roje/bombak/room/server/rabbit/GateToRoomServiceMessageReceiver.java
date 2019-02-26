@@ -1,7 +1,7 @@
 package com.roje.bombak.room.server.rabbit;
 
 import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.mq.ForwardClientMessageReceiver;
+import com.roje.bombak.common.mq.GateToServerMessageReceiver;
 import com.roje.bombak.common.processor.Dispatcher;
 import com.roje.bombak.common.proto.ServerMsg;
 import com.roje.bombak.room.common.constant.RoomConstant;
@@ -18,15 +18,15 @@ import org.springframework.stereotype.Component;
  **/
 @Slf4j
 @Component
-public class RoomServiceReceiver extends ForwardClientMessageReceiver {
+public class GateToRoomServiceMessageReceiver extends GateToServerMessageReceiver {
 
     private final RoomRedisDao roomRedisDao;
 
     private final AmqpTemplate amqpTemplate;
 
-    public RoomServiceReceiver(Dispatcher dispatcher,
-                               RoomRedisDao roomRedisDao,
-                               AmqpTemplate amqpTemplate) {
+    public GateToRoomServiceMessageReceiver(Dispatcher dispatcher,
+                                       RoomRedisDao roomRedisDao,
+                                       AmqpTemplate amqpTemplate) {
         super(dispatcher);
         this.roomRedisDao = roomRedisDao;
         this.amqpTemplate = amqpTemplate;
@@ -34,15 +34,14 @@ public class RoomServiceReceiver extends ForwardClientMessageReceiver {
 
     @RabbitListener(queues = "room-service-1")
     public void onMessage(byte[] data) {
-        ServerMsg.ForwardClientMessage message = parseClientMessage(data);
+        ServerMsg.GateToServerMessage message = parseMessage(data);
         if (message == null) {
             return;
         }
-        int messageId = message.getCsMessage().getMessageId();
-        if (messageId != RoomConstant.Cmd.ROOM_CMD) {
+        if (message.getMsgType() == RoomConstant.ROOM_SERVICE) {
             process(message);
-        } else {
-            ServiceInfo serviceInfo = roomRedisDao.getUserRoomService(message.getUid());
+        } else if (message.getMsgType() == RoomConstant.ROOM_CMD){
+            ServiceInfo serviceInfo = roomRedisDao.getUserRoomService(message.getUserId());
             if (serviceInfo == null) {
                 log.info("没有加入任何房间");
             } else {

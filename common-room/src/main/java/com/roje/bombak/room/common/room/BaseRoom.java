@@ -1,18 +1,19 @@
 package com.roje.bombak.room.common.room;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.Message;
 import com.roje.bombak.room.common.constant.RoomConstant;
-import com.roje.bombak.room.common.player.Player;
+import com.roje.bombak.room.common.manager.RoomManager;
+import com.roje.bombak.room.common.player.BasePlayer;
 import com.roje.bombak.room.common.player.VoteStatus;
 import com.roje.bombak.room.common.proto.RoomMsg;
 import com.roje.bombak.room.common.utils.RoomMessageSender;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * @author pc
@@ -20,21 +21,35 @@ import java.util.concurrent.TimeUnit;
  * @date 2019/1/9
  */
 @Slf4j
-public abstract class BaseRoom<P extends Player> implements Room<P> {
+@SuppressWarnings("unchecked")
+public abstract class BaseRoom<P extends BasePlayer> implements Room<P> {
 
-    private static final int VOTE_TIME = 60;
+    /**
+     * 房间id
+     */
+    private long id;
+    /**
+     * 房主id
+     */
+    private long ownerId;
+    /**
+     * 房间名称
+     */
+    private String name;
 
-    private final long id;
+    private String gameType;
+    /**
+     * 房间任务执行器
+     */
+    private EventExecutor executor;
+    /**
+     * 房间类型
+     */
+    private int roomType;
 
-    private final long ownerId;
+    private int seatSize;
 
-    private final String name;
-
-    private final EventExecutor executor;
-
-    private final RoomType roomType;
-
-    private final int seatCount;
+    private int capacity;
 
     protected final Map<Long, P> players;
 
@@ -50,36 +65,118 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
 
     private P proposer;
 
-    private List<P> disbandList;
+    private ScheduledFuture disbandTask;
+
+    private final RoomManager manager;
 
     protected RoomMessageSender sender;
 
-    private final RoomListener<P,Room<P>> listener;
+    private long waitVoteTime;
 
-    private long startDisbandTime;
+    private int round;
 
-    private final int maxPerson;
+//    public BaseRoom(long id, long ownerId, String name, String gameType, RoomType type, int seatCount,
+//                       int maxPerson, EventExecutor executor, RoomMessageSender sender, RoomListener<P,Room<P>> listener) {
+//        this.id = id;
+//        this.ownerId = ownerId;
+//        this.name = name;
+//        this.gameType = gameType;
+//        this.executor = executor;
+//        this.roomType = type;
+//        this.seatCount = seatCount;
+//        this.maxPerson = maxPerson;
+//        this.sender = sender;
+//        this.listener = listener;
+//        players = new HashMap<>();
+//        seatPlayers = new HashMap<>();
+//        gamers = new ArrayList<>();
+//        disbandList = new ArrayList<>();
+//    }
 
-    private final String gameType;
-
-    private Future disbandTask;
-
-    protected BaseRoom(long id, long ownerId, String name, String gameType, RoomType type, int seatCount,
-                       int maxPerson, EventExecutor executor, RoomMessageSender sender, RoomListener<P,Room<P>> listener) {
+    public BaseRoom(long id, RoomManager manager) {
         this.id = id;
-        this.ownerId = ownerId;
-        this.name = name;
-        this.gameType = gameType;
-        this.executor = executor;
-        this.roomType = type;
-        this.seatCount = seatCount;
-        this.maxPerson = maxPerson;
-        this.sender = sender;
-        this.listener = listener;
         players = new HashMap<>();
         seatPlayers = new HashMap<>();
         gamers = new ArrayList<>();
-        disbandList = new ArrayList<>();
+        this.manager = manager;
+    }
+
+    @Override
+    public void setSender(RoomMessageSender sender) {
+        this.sender = sender;
+    }
+
+    @Override
+    public RoomMessageSender getSender() {
+        return sender;
+    }
+
+    @Override
+    public void setExecutor(EventExecutor executor) {
+        this.executor = executor;
+    }
+
+    public int getRound() {
+        return round;
+    }
+
+    public int getSeatSize() {
+        return seatSize;
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    public long getOwnerId() {
+        return ownerId;
+    }
+
+    @Override
+    public void setWaitVoteTime(long waitVoteTime) {
+        this.waitVoteTime = waitVoteTime;
+    }
+
+    @Override
+    public void setOwnerId(long ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public int getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(int roomType) {
+        this.roomType = roomType;
+    }
+
+    public void setSeatSize(int seatSize) {
+        this.seatSize = seatSize;
+    }
+
+    @Override
+    public int getCapacity() {
+        return capacity;
+    }
+
+    @Override
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
+
+    @Override
+    public void setGameType(String gameType) {
+        this.gameType = gameType;
     }
 
     @Override
@@ -88,32 +185,8 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
     }
 
     @Override
-    public long id() {
-        return id;
-    }
-
-    public long ownerId() {
-        return ownerId;
-    }
-
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public EventExecutor executor() {
-        return executor;
-    }
-
-    @Override
     public P getPlayer(long uid) {
         return players.get(uid);
-    }
-
-    @Override
-    public RoomType roomType() {
-        return roomType;
     }
 
     public boolean isGameStart() {
@@ -124,55 +197,112 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
         return cardRoundStart;
     }
 
+    @Override
+    public int getPlayerSize() {
+        return players.size();
+    }
+
+    @Override
+    public EventExecutor getExecutor() {
+        return executor;
+    }
+
+    protected void foreachGamers(Consumer<P> consumer) {
+        gamers.forEach(consumer);
+    }
+
+    private void sendRoomData(P player) {
+        RoomMsg.JoinRoomRes.Builder builder = RoomMsg.JoinRoomRes.newBuilder();
+        builder.setGameType(gameType);
+        builder.setRoomData(Any.pack(roomData(player)));
+        sender.sendMsgToGate(player, RoomConstant.Cmd.JOIN_ROOM_RES,builder.build());
+    }
+
+    @Override
+    public void reJoin(P player, String sessionId) {
+        player.setExit(false);
+        player.setSessionId(sessionId);
+        player.setGateInfo(manager.getUserGateInfo(player.getUid()));
+        if (player.getSeat() != 0) {
+            RoomMsg.PlayerInfo.Builder builder = RoomMsg.PlayerInfo.newBuilder();
+            builder.setUid(player.getUid());
+            sender.sendMsgToGate(getPlayersExcept(player),RoomConstant.Notice.REJOIN,builder.build());
+        }
+        sendRoomData(player);
+        noticeDisbandVote(player);
+        onNoticePlayer(player);
+    }
+
+    private Collection<P> getPlayersExcept(P player) {
+        Collection<P> ps = new ArrayList<>(players.values());
+        ps.remove(player);
+        return ps;
+    }
+
+    @Override
+    public void online(P player, String sessionId) {
+        player.setOffline(false);
+        player.setSessionId(sessionId);
+        player.setGateInfo(manager.getUserGateInfo(player.getUid()));
+        if (player.getSeat() != 0) {
+            RoomMsg.PlayerInfo.Builder builder = RoomMsg.PlayerInfo.newBuilder();
+            builder.setUid(player.getUid());
+            sender.sendMsgToGate(getPlayersExcept(player),RoomConstant.Notice.ONLINE,builder.build());
+        }
+        sendRoomData(player);
+        noticeDisbandVote(player);
+        onNoticePlayer(player);
+    }
+
+    @Override
+    public void join(long uid,String sessionId) {
+        P player = newPlayer(uid);
+        player.setSessionId(sessionId);
+        player.setUser(manager.getUser(uid));
+        player.setGateInfo(manager.getUserGateInfo(uid));
+        players.put(player.getUid(),player);
+        manager.playerJoinedRoom(player,this);
+        sendRoomData(player);
+        noticeDisbandVote(player);
+        onNoticePlayer(player);
+    }
+
     private void close(String reason) {
         closed = true;
-        if (disbandTask != null) {
-            disbandTask.cancel(true);
-        }
+        endDisbandVote();
         onClosed();
-        listener.roomClosed(this);
+        manager.roomClosed(this);
         RoomMsg.RoomClosed.Builder builder = RoomMsg.RoomClosed.newBuilder();
         builder.setReason(reason);
-        sender.sendMsg(players.values(), RoomConstant.Notice.ROOM_CLOSE, builder.build());
+        sender.sendMsgToGate(players.values(), RoomConstant.Notice.ROOM_CLOSE, builder.build());
     }
 
     public P getSeat(int seat) {
         return seatPlayers.get(seat);
     }
 
-    /**
-     * 开始游戏需要的最小人数
-     *
-     * @return 人数
-     */
-    protected abstract int startPersonCount();
-
-    /**
-     * 房卡房游戏开始判断
-     *
-     * @return 能够开始返回true, 否则返回false
-     */
-    protected abstract boolean checkCardRoundStart();
-
-    /**
-     * 开始游戏
-     */
-    protected abstract void startGame0();
 
     /**
      * 开始游戏
      */
     private void startGame() {
         gameStart = true;
-        if (roomType == RoomType.card) {
+        if (roomType == CARD) {
             if (!cardRoundStart) {
                 cardRoundStart = true;
             }
+            round++;
         }
         gamers.clear();
         gamers = new ArrayList<>(seatPlayers.values());
+        gamers.sort(Comparator.comparingInt(BasePlayer::getSeat));
         log.info("开始游戏");
-        startGame0();
+        sender.sendMsgToGate(players.values(), RoomConstant.Cmd.START_GAME_RES);
+
+        for (P p:gamers) {
+            p.newGame();
+        }
+        onStartGame();
     }
 
     public void checkStart() {
@@ -180,10 +310,10 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
             return;
         }
         boolean start = false;
-        if (roomType == RoomType.gold) {
+        if (roomType == GOLD) {
             //金币房,满足人数就可以开始游戏
             start = seatPlayers.size() >= startPersonCount();
-        } else if (roomType == RoomType.card){
+        } else if (roomType == CARD){
             start = checkCardRoundStart();
         }
         if (start) {
@@ -192,26 +322,30 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
     }
 
 
+    /**
+     *解散申请
+     */
     public void applyDisband(P player) {
-        if (roomType != RoomType.card) {
-            log.info("只有房卡房才能申请解散");
+        if (roomType != CARD) {
+            log.info("还有房卡房才能解散房间");
             return;
         }
         if (!cardRoundStart) {
             //牌局还没开始,可以解散房间
-            if (player.uid() == ownerId) {
+            if (player.getUid() == ownerId) {
                 //验证身份,只有房主可以解散房间
                 close("房间被房主解散");
             }
         } else {
-            log.info("牌局开始了,申请解散");
-            if (proposer != null) {
+            log.info("牌局已经开始了,申请解散");
+            if (proposer != null || disbandTask != null) {
                 log.info("已经有人申请过解散了,不能再申请");
             } else {
                 if (player.isInGame()) {
+                    //游戏中的玩家才能申请解散房间
                     initDisbandVote(proposer);
-                    indicateDisbandVote(null);
-                    disbandTask = executor.schedule(this::disbandTimeout,VOTE_TIME, TimeUnit.SECONDS);
+                    disbandTask = executor.schedule(this::disbandTimeout, waitVoteTime, TimeUnit.SECONDS);
+                    noticeDisbandVote(null);
                 }
             }
 
@@ -225,62 +359,62 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
         if (proposer == null) {
             return;
         }
-        for (P p:disbandList) {
+        for (P p:gamers) {
             if (p.getVoteStatus() == VoteStatus.wait) {
                 p.setVoteStatus(VoteStatus.refuse);
             }
         }
+        checkVoteResult();
     }
 
     private void initDisbandVote(P proposer) {
         this.proposer = proposer;
-        disbandList.clear();
         for (P p:gamers) {
             if (p != proposer) {
                 p.setVoteStatus(VoteStatus.wait);
             } else {
                 p.setVoteStatus(VoteStatus.agree);
             }
-            disbandList.add(p);
         }
-        startDisbandTime = System.currentTimeMillis();
     }
 
     private void endDisbandVote() {
         proposer = null;
-        for (P p:disbandList) {
-            p.setVoteStatus(VoteStatus.def);
+        for (P p:gamers) {
+            if (p.getVoteStatus() != VoteStatus.def) {
+                p.setVoteStatus(VoteStatus.def);
+            }
         }
-        disbandList.clear();
         if (disbandTask != null) {
             disbandTask.cancel(false);
+            disbandTask = null;
         }
     }
 
-    private void indicateDisbandVote(P player) {
-        int reTime = VOTE_TIME - (int)(System.currentTimeMillis() - startDisbandTime) / 1000;
-        RoomMsg.DisCardRoomRes.Builder builder = RoomMsg.DisCardRoomRes.newBuilder();
-        builder.setTime(reTime);
-        for (P p:disbandList) {
-            RoomMsg.DisbandData.Builder b = RoomMsg.DisbandData.newBuilder();
-            b.setUid(p.uid());
-            b.setStatus(p.getVoteStatus().getCode());
-            builder.addDisbandData(b);
+    private void noticeDisbandVote(P player) {
+        if (proposer == null || disbandTask == null) {
+            return;
+        }
+        RoomMsg.DisbandRoomRes.Builder builder = RoomMsg.DisbandRoomRes.newBuilder();
+        builder.setTime(disbandTask.getDelay(TimeUnit.MILLISECONDS));
+        for (P p:gamers) {
+            if (p.getVoteStatus() != VoteStatus.def) {
+                RoomMsg.DisbandData.Builder b = RoomMsg.DisbandData.newBuilder();
+                b.setUid(p.getUid());
+                b.setStatus(p.getVoteStatus().getCode());
+                builder.addDisbandData(b);
+            }
         }
         if (player == null) {
-            sender.sendMsg(players.values(), RoomConstant.Cmd.DISBAND_CARD_ROOM_RES,builder.build());
+            sender.sendMsgToGate(players.values(), RoomConstant.Cmd.DISBAND_CARD_ROOM_RES,builder.build());
         } else {
-            sender.sendMsg(player, RoomConstant.Cmd.DISBAND_CARD_ROOM_RES,builder.build());
+            sender.sendMsgToGate(player, RoomConstant.Cmd.DISBAND_CARD_ROOM_RES,builder.build());
         }
     }
 
     public void disbandVote(P p, boolean vote) {
-        if (roomType != RoomType.card) {
-            log.info("不是房卡房,没有投票请求");
-            return;
-        }
-        if (proposer == null) {
-            log.info("并没有人申请过解散房间");
+        if (proposer == null || disbandTask == null) {
+            log.info("投票现在不可用");
             return;
         }
         if (p.getVoteStatus() == VoteStatus.wait) {
@@ -290,9 +424,9 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
                 p.setVoteStatus(VoteStatus.refuse);
             }
             RoomMsg.DisbandData.Builder builder = RoomMsg.DisbandData.newBuilder();
-            builder.setUid(p.uid());
+            builder.setUid(p.getUid());
             builder.setStatus(p.getVoteStatus().getCode());
-            sender.sendMsg(players.values(), RoomConstant.Cmd.DISBAND_CARD_ROOM_VOTE_RES,builder.build());
+            sender.sendMsgToGate(players.values(), RoomConstant.Cmd.DISBAND_CARD_ROOM_VOTE_RES,builder.build());
 
             checkVoteResult();
         }
@@ -303,16 +437,22 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
      */
     private void checkVoteResult() {
         //未投票人数
-        int def = 0;
-        for (P p:disbandList) {
+        int wait = 0;
+        int all = 0;
+        int agree = 0;
+        for (P p:gamers) {
             if (p.getVoteStatus() == VoteStatus.refuse) {
                 endDisbandVote();
                 return;
             } else if (p.getVoteStatus() == VoteStatus.wait) {
-                def++;
+                wait++;
+                all++;
+            } else if (p.getVoteStatus() == VoteStatus.agree) {
+                agree++;
             }
         }
-        if (def == 0) {
+        if (wait == 0) {
+            endDisbandVote();
             close("房间已被解散");
         }
     }
@@ -322,38 +462,47 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
         List<P> ps = new ArrayList<>(players.values());
         if (p.isInGame()) {
             p.setExit(true);
-            RoomMsg.PlayerExit.Builder builder = RoomMsg.PlayerExit.newBuilder();
-            builder.setUid(p.uid());
-            sender.sendMsg(ps, RoomConstant.Notice.PLAYER_EXIT,builder.build());
+            RoomMsg.PlayerInfo.Builder builder = RoomMsg.PlayerInfo.newBuilder();
+            builder.setUid(p.getUid());
+            sender.sendMsgToGate(ps, RoomConstant.Notice.PLAYER_EXIT,builder.build());
         } else {
-            players.remove(p.uid());
-            listener.leaveRoom(p,this);
-            RoomMsg.ExitRoomRes.Builder builder = RoomMsg.ExitRoomRes.newBuilder();
-            builder.setUid(p.uid());
+            players.remove(p.getUid());
+            manager.playerLeaveRoom(p,this);
+            onPlayerExit(p);
+            RoomMsg.PlayerInfo.Builder builder = RoomMsg.PlayerInfo.newBuilder();
+            builder.setUid(p.getUid());
             if (p.getSeat() != 0) {
                 //在座位上
                 seatPlayers.remove(p.getSeat());
-                sender.sendMsg(ps, RoomConstant.Cmd.EXIT_ROOM_RES,builder.build());
+                sender.sendMsgToGate(ps, RoomConstant.Cmd.EXIT_ROOM_RES,builder.build());
             } else {
                 //不在座位上,通知本人就可以了
-                sender.sendMsg(p, RoomConstant.Cmd.EXIT_ROOM_RES,builder.build());
+                sender.sendMsgToGate(p, RoomConstant.Cmd.EXIT_ROOM_RES,builder.build());
             }
         }
     }
 
     public void getUp(P p) {
         //此判断跟退出房间类似,玩家在游戏中或者房卡房玩家在牌局中,不能离开座位
-        if (p.isInGame()) {
-            RoomMsg.GetUpRes.Builder builder = RoomMsg.GetUpRes.newBuilder();
-            builder.setUid(p.uid());
-            sender.sendMsg(players.values(), RoomConstant.Cmd.GET_UP_RES,builder.build());
+        if (!p.isInGame()) {
+            if (p.getSeat() != 0) {
+                p.setSeat(0);
+                RoomMsg.PlayerInfo.Builder builder = RoomMsg.PlayerInfo.newBuilder();
+                builder.setUid(p.getUid());
+                sender.sendMsgToGate(players.values(), RoomConstant.Cmd.GET_UP_RES,builder.build());
+            } else {
+                log.info("先选个座位坐下");
+            }
         } else {
             log.info("现在不能离开座位");
         }
     }
 
+    /**
+     * 坐下
+     */
     public void sitDown(P p,int seat) {
-        if (seat < 1 || seat > seatCount) {
+        if (seat < 1 || seat > seatSize) {
             log.info("无效的座位号");
             return;
         }
@@ -371,11 +520,15 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
         others.remove(p);
         RoomMsg.SitDownRes.Builder builder = RoomMsg.SitDownRes.newBuilder();
         builder.setPlayerData(Any.pack(p.playerData(p)));
-        sender.sendMsg(p, RoomConstant.Cmd.SIT_DOWN_RES,builder.build());
+        sender.sendMsgToGate(p, RoomConstant.Cmd.SIT_DOWN_RES,builder.build());
         builder.setPlayerData(Any.pack(p.playerData(null)));
-        sender.sendMsg(others, RoomConstant.Cmd.SIT_DOWN_RES, builder.build());
+        sender.sendMsgToGate(others, RoomConstant.Cmd.SIT_DOWN_RES, builder.build());
 
         checkStart();
+    }
+
+    protected boolean minusGoldIfEnough(P player,int gold) {
+        return manager.minusGoldIfEnough(player,gold);
     }
 
     /**
@@ -384,64 +537,37 @@ public abstract class BaseRoom<P extends Player> implements Room<P> {
     protected abstract void onClosed();
 
     /**
-     * 初始化玩家加入房间
-     * @param player 玩家
-     */
-    protected abstract void initJoin(P player);
-
-    /**
      * 玩家加入房间
      * @param player 玩家
      */
-    protected abstract void onPlayerJoin(P player);
-
+    protected abstract void onNoticePlayer(P player);
 
     /**
-     * 房间数据
-     * @param player 接收房间数据的玩家
-     * @return protobuf 序列化的数据
+     * 生成新的玩家对象
+     * @param uid 玩家id
+     * @return 玩家
      */
-    protected abstract Message roomData(P player);
+    protected abstract P newPlayer(long uid);
 
-    @Override
-    public boolean requestJoin(P player) {
-        if (players.containsValue(player)) {
-            if (player.isOffline()) {
-                log.info("玩家{}在房间{}中上线了",player.uid(),id);
-                player.setOffline(false);
-            }
-            if (player.isExit()) {
-                log.info("玩家{}从新进入了房间{}",player.uid(),id);
-                player.setExit(false);
-            }
-            if (player.getSeat() != 0) {
-                //已经坐下
-                List<P> senders = new ArrayList<>(players.values());
-                senders.remove(player);
-                RoomMsg.ReJoin.Builder builder = RoomMsg.ReJoin.newBuilder();
-                builder.setUid(player.uid());
-                sender.sendMsg(senders, RoomConstant.Notice.REJOIN,builder.build());
-            }
-        } else {
-            if (players.size() >= maxPerson) {
-                log.info("房间满了");
-                sender.sendErrMsg(player,RoomConstant.ErrorCode.ROOM_FULL);
-                return false;
-            }
-            players.put(player.uid(),player);
-            initJoin(player);
-        }
-        RoomMsg.JoinRoomRes.Builder builder = RoomMsg.JoinRoomRes.newBuilder();
-        builder.setGameType(gameType);
-        builder.setRoomData(Any.pack(roomData(player)));
-        sender.sendMsg(player,RoomConstant.Cmd.JOIN_ROOM_RES,builder.build());
+    /**
+     * 开始游戏需要的最小人数
+     *
+     * @return 人数
+     */
+    protected abstract int startPersonCount();
 
-        if (proposer != null) {
-            indicateDisbandVote(player);
-        }
-        onPlayerJoin(player);
-        return true;
-    }
+    /**
+     * 房卡房游戏开始判断
+     *
+     * @return 能够开始返回true, 否则返回false
+     */
+    protected abstract boolean checkCardRoundStart();
 
+    /**
+     * 游戏开始
+     */
+    protected abstract void onStartGame();
 
+    protected abstract void onPlayerExit(P player);
+    
 }

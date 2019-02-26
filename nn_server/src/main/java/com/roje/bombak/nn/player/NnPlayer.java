@@ -4,10 +4,8 @@ package com.roje.bombak.nn.player;
 import com.google.protobuf.Message;
 import com.roje.bombak.nn.config.NnSetting;
 import com.roje.bombak.nn.proto.NnMsg;
-import com.roje.bombak.nn.room.NnRoom;
-import com.roje.bombak.room.common.player.AbstractPlayer;
+import com.roje.bombak.room.common.player.BasePlayer;
 import com.roje.bombak.room.common.player.Player;
-import com.roje.bombak.room.common.proto.RoomMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,13 +14,13 @@ import java.util.List;
 /**
  * @author pc
  */
-public class NnPlayer extends AbstractPlayer {
+public class NnPlayer extends BasePlayer {
 
     private List<Integer> hands;
 
     private RushStatus rushStatus;
 
-    private int rushMultiple;
+    private int rushTime;
 
     private BetStatus betStatus;
 
@@ -59,7 +57,7 @@ public class NnPlayer extends AbstractPlayer {
     }
 
     @Override
-    public void newGame() {
+    public void onNewGame() {
         hands.clear();
         betStatus = BetStatus.def;
         rushStatus = RushStatus.def;
@@ -67,6 +65,14 @@ public class NnPlayer extends AbstractPlayer {
         betScore = 0;
         openCards.clear();
         dealCards.clear();
+    }
+
+    public int getRushTime() {
+        return rushTime;
+    }
+
+    public void setRushTime(int rushTime) {
+        this.rushTime = rushTime;
     }
 
     public List<Integer> hands() {
@@ -100,16 +106,17 @@ public class NnPlayer extends AbstractPlayer {
     @Override
     public Message playerData(Player p) {
         NnMsg.PlayerData.Builder builder = NnMsg.PlayerData.newBuilder();
-        builder.setUid(uid());
-        if (getNickname() != null) {
-            builder.setNickname(getNickname());
+        builder.setUid(getUid());
+        String nickname = getUser().getNickname();
+        if (nickname != null) {
+            builder.setNickname(nickname);
         }
-        if (getHeadImg() != null) {
-            builder.setHeadImg(getHeadImg());
+        String headImg = getUser().getHeadImg();
+        if (headImg != null) {
+            builder.setHeadImg(headImg);
         }
         builder.setSeat(getSeat());
         builder.setOffline(isOffline());
-        builder.setReady(isReady());
         builder.setInGame(isInGame());
         builder.setHandCardSize(hands.size());
         if (this == p) {

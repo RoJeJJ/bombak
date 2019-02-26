@@ -1,6 +1,6 @@
 package com.roje.bombak.gate.config;
 
-import com.roje.bombak.common.constant.GlobalConstant;
+import com.roje.bombak.common.constant.Constant;
 import com.roje.bombak.common.eureka.ServiceInfo;
 import org.springframework.amqp.core.*;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,12 +16,12 @@ import org.springframework.context.annotation.Configuration;
 public class GateRabbitConfig {
     @Bean
     public Queue fanoutQueue() {
-        return new Queue(GlobalConstant.BROADCAST_QUEUE_NAME);
+        return new Queue(Constant.BROADCAST_QUEUE_NAME);
     }
 
     @Bean
     public FanoutExchange exchange() {
-        return new FanoutExchange(GlobalConstant.BROADCAST_EXCHANGE_NAME);
+        return new FanoutExchange(Constant.BROADCAST_EXCHANGE_NAME);
     }
 
     @Bean

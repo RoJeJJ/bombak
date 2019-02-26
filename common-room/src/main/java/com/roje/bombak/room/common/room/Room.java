@@ -1,6 +1,8 @@
 package com.roje.bombak.room.common.room;
 
+import com.google.protobuf.Message;
 import com.roje.bombak.room.common.player.Player;
+import com.roje.bombak.room.common.utils.RoomMessageSender;
 import io.netty.util.concurrent.EventExecutor;
 
 
@@ -11,71 +13,114 @@ import io.netty.util.concurrent.EventExecutor;
  **/
 public interface Room<P extends Player> {
 
+    int CARD = 1;
+
+    int GOLD = 2;
+
     /**
      * 房间是否关闭
      * @return boolean
      */
     boolean isClosed();
+
+    void setOwnerId(long creatorId);
+
+    void setGameType(String gameType);
+
     /**
      * 房间id
+     *
      * @return id
      */
-    long id();
+    long getId();
+
 
     /**
-     * 房间名称
-     * @return 房间名字
-     */
-    String name();
-
-    /**
-     * 房间线程
-     * @return 房间线程
-     */
-    EventExecutor executor();
-
-    /**
-     * 根据uid获取房间内玩家
-     * @param uid 用户id
+     * 获取房间中指定uid的玩家
+     * @param uid uid
      * @return 玩家
      */
     P getPlayer(long uid);
 
     /**
-     * 房间类型
-     * @return {@link RoomType}
+     * 房间总玩家数
+     * @return 所有玩家的数量
      */
-    RoomType roomType();
-
-//    /**
-//     * 玩家是否已经在房间中
-//     * @param player 玩家
-//     * @return 已经在房间中true,否则false
-//     */
-//    boolean contain(P player);
-//
-//    /**
-//     * 获取房间中的玩家集合
-//     * @return 玩家集合
-//     */
-//    Collection<Player> getPlayers();
-//
-//    /**
-//     * 获取玩家人数
-//     * @return 玩家人数
-//     */
-//    int getPlayerSize();
-//
-//    /**
-//     * 加入新玩家
-//     * @param player 玩家
-//     */
-//    void addPlayer(P player);
+    int getPlayerSize();
 
     /**
-     * 请求加入房间
-     * @param player 请求的玩家
-     * @return 加入成功true,加入失败false
+     * 将房间数据转化为protobuf数据
+     * @param player 要发送的玩家
+     * @return protobuf序列化的数据
      */
-    boolean requestJoin(P player);
+    Message roomData(P player);
+
+    /**
+     * 房间任务执行器
+     * @return {@link EventExecutor}
+     */
+    EventExecutor getExecutor();
+
+    /**
+     * 房间消息发送类
+     * @return {@link RoomMessageSender}
+     */
+    RoomMessageSender getSender();
+
+    /**
+     * 设置房间消息发送
+     * @param sender sender
+     */
+    void setSender(RoomMessageSender sender);
+
+    /**
+     * 设置房间任务执行器
+     * @param executor 执行器
+     */
+    void setExecutor(EventExecutor executor);
+
+    /**
+     * 设置房间容量
+     * @param capacity 容量
+     */
+    void setCapacity(int capacity);
+
+    /**
+     * 房间容量
+     * @return 房间容量
+     */
+    int getCapacity();
+
+    /**
+     * 房间解散时,投票等待时间
+     * @param waitVoteTime 单位:毫秒
+     */
+    void setWaitVoteTime(long waitVoteTime);
+
+    /**
+     * 获取房间类型
+     * @return 房间类型
+     */
+    int getRoomType();
+
+    /**
+     * 玩家重新进入半途退出的房间
+     * @param player 玩家
+     * @param sessionId 玩家sessionId
+     */
+    void reJoin(P player, String sessionId);
+
+    /**
+     * 玩家在房间中上线
+     * @param player 上线的玩家
+     * @param sessionId 玩家的sessionId
+     */
+    void online(P player, String sessionId);
+
+    /**
+     * 新加入房间
+     * @param uid 玩家uid
+     * @param sessionId 玩家sessionId
+     */
+    void join(long uid,String sessionId);
 }

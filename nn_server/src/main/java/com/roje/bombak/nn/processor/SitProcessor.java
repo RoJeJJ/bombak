@@ -8,6 +8,7 @@ import com.roje.bombak.nn.room.NnRoom;
 import com.roje.bombak.room.common.constant.RoomConstant;
 import com.roje.bombak.room.common.processor.RoomProcessor;
 import com.roje.bombak.room.common.proto.RoomMsg;
+import com.roje.bombak.room.common.room.Room;
 import com.roje.bombak.room.common.utils.RoomMessageSender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,17 +31,12 @@ public class SitProcessor implements RoomProcessor<NnPlayer, NnRoom> {
 
     @Override
     public void process(NnRoom room, NnPlayer p, Any any) throws Exception {
-        if (room.roomType() == RoomMsg.RoomType.card && room.isCardRoundStart() && !room.config().joinHalfWay) {
+        if (room.getRoomType() == Room.CARD && room.isCardRoundStart() && !room.getSetting().joinHalfWay) {
             log.info("游戏已经开始不允许中途加入游戏");
-            sender.sendErrMsg(p, NnConstant.ErrorCode.PROHIBIT_JOIN_HALF);
+            sender.sendErrMsgToGate(p, NnConstant.ErrorCode.PROHIBIT_JOIN_HALF);
             return;
         }
         RoomMsg.SitDownReq sitReq = any.unpack(RoomMsg.SitDownReq.class);
-        int seat = sitReq.getSeat();
-        if (seat < 1 || seat > room.config().personNum) {
-            log.info("座位号错误");
-            return;
-        }
-        room.sitDown(p,seat);
+        room.sitDown(p,sitReq.getSeat());
     }
 }

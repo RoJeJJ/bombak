@@ -19,6 +19,7 @@ message RoomSetting {
     bool wxn = 14;
     bool ths = 15;
     bool aa = 16;
+    int32 roomType = 17;
 }
 
 message RushData{
@@ -28,7 +29,7 @@ message RushData{
 
 //抢庄
 message NoticeRush {
-    int32 time = 1;
+    int64 time = 1;
     repeated RushData rushData = 2;
 }
 
@@ -49,7 +50,7 @@ message BetData{
 
 //下注
 message NoticeBet {
-    int32 time = 1;
+    int64 time = 1;
     repeated BetData betData = 2;
 }
 
@@ -77,7 +78,7 @@ message CheckData{
 }
 //通知算牌
 message NoticeCheck {
-    int32 time = 1;
+    int64 time = 1;
     repeated CheckData checkData = 2;
 }
 

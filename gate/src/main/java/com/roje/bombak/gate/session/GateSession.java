@@ -9,9 +9,7 @@ import com.roje.bombak.common.proto.ServerMsg;
 public interface GateSession {
 
 
-    int serial();
-
-    boolean checkSerial(int serial);
+    String id();
     /**
      * 用户uid
      * @return uid
@@ -28,7 +26,7 @@ public interface GateSession {
      * 发送消息
      * @param message msg
      */
-    void send(ServerMsg.S2CMessage message);
+    void send(ServerMsg.GateToClientMessage message);
 
     /**
      * 判断是否登录

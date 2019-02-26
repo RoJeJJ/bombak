@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.roje.bombak.tcb.proto;
+
+message AddPoolData{
+    int64 uid = 1;
+    int64 point = 2;
+}
+
+message DealData {
+    int64 uid = 1;
+    int32 pokerSize = 2;
+    repeated int32 pokers = 3;
+}
+
+message NoticeAddPool{
+    repeated AddPoolData data = 1;
+}
+
+message NoticeDeal{
+    repeated DealData data = 1;
+}
+
+message NoticeBet{
+    int64 uid = 1;
+    int32 turn = 2;
+}

@@ -5,7 +5,8 @@ package com.roje.bombak.room.common.room;
  * @version 1.0
  * @date 2019/2/15
  **/
-public enum  RoomType {
+public enum RoomType {
+
     /**
      * 房卡房
      */
@@ -13,8 +14,7 @@ public enum  RoomType {
     /**
      * 金币房
      */
-    gold(1),
-    ;
+    gold(1);
 
     private int code;
 

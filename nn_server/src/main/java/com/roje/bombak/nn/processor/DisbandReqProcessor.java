@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Message(id = RoomConstant.Cmd.DISBAND_CARD_ROOM_REQ)
 public class DisbandReqProcessor implements RoomProcessor<NnPlayer, NnRoom> {
     @Override
-    public void process(NnRoom room, NnPlayer player, Any any) throws Exception {
+    public void process(NnRoom room, NnPlayer player, Any any) {
         room.applyDisband(player);
     }
 }

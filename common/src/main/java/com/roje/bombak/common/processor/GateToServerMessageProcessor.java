@@ -8,11 +8,11 @@ import com.roje.bombak.common.proto.ServerMsg;
  * @version 1.0
  * @date 2019/1/9
  **/
-public interface RecForwardClientMessageProcessor {
+public interface GateToServerMessageProcessor {
     /**
      * 消息处理器
      * @param message 消息
      * @throws Exception 处理异常
      */
-    void process(ServerMsg.ForwardClientMessage message) throws Exception;
+    void process(ServerMsg.GateToServerMessage message) throws Exception;
 }

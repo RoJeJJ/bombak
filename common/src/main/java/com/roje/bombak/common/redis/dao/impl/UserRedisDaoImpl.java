@@ -3,14 +3,17 @@ package com.roje.bombak.common.redis.dao.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.redis.constant.RedisConstant;
 import com.roje.bombak.common.model.User;
 import com.roje.bombak.common.model.impl.SimpleUser;
+import com.roje.bombak.common.redis.constant.RedisConstant;
 import com.roje.bombak.common.redis.dao.UserRedisDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -26,8 +29,23 @@ public class UserRedisDaoImpl implements UserRedisDao, RedisConstant {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final DefaultRedisScript<Boolean> redisScript;
+
+    private static final String SCRIPT_SUB_GOLD_IF_ENOUGH = "local gold = redis.call('hget',KEYS[1],'gold')\n" +
+            "gold = tonumber(gold)\n" +
+            "local subGold = tonumber(ARGV[1])\n" +
+            "\n" +
+            "if(gold >= subGold) then\n" +
+            "    redis.call('set',KEYS[1],gold - sub)\n" +
+            "    return true\n" +
+            "else\n" +
+            "    return false\n" +
+            "end";
+
     public UserRedisDaoImpl(RedisTemplate<Object, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
+        redisScript = new DefaultRedisScript<>(SCRIPT_SUB_GOLD_IF_ENOUGH);
+        redisScript.setResultType(Boolean.class);
     }
 
 
@@ -62,16 +80,11 @@ public class UserRedisDaoImpl implements UserRedisDao, RedisConstant {
 
     @Override
     public Long getAccountId(String account) {
-        Object object = redisTemplate.opsForHash().get(ACCOUNT_ID, account);
-        if (object == null) {
-            return null;
-        } else if (object instanceof Integer) {
-            return (long) (Integer) object;
-        } else if (object instanceof Long) {
-            return (Long) object;
-        } else {
+        Number id = (Number) redisTemplate.opsForHash().get(ACCOUNT_ID, account);
+        if (id == null) {
             return null;
         }
+        return id.longValue();
     }
 
     @Override
@@ -113,4 +126,17 @@ public class UserRedisDaoImpl implements UserRedisDao, RedisConstant {
     public Long getUserId() {
         return redisTemplate.opsForValue().increment(USER_ID);
     }
+
+    @Override
+    public boolean minusGoldIfEnough(long uid, int gold) {
+        List<Object> keys = new ArrayList<>();
+        keys.add(USER + uid);
+        Boolean b =  redisTemplate.execute(redisScript,keys,gold);
+        if (b == null) {
+            return false;
+        } else {
+            return b;
+        }
+    }
+
 }

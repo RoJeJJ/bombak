@@ -1,7 +1,7 @@
 package com.roje.bombak.common.mq;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.roje.bombak.common.processor.RecForwardClientMessageProcessor;
+import com.roje.bombak.common.processor.GateToServerMessageProcessor;
 import com.roje.bombak.common.processor.Dispatcher;
 import com.roje.bombak.common.proto.ServerMsg;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +12,11 @@ import lombok.extern.slf4j.Slf4j;
  * @author pc
  */
 @Slf4j
-public class ForwardClientMessageReceiver {
+public class GateToServerMessageReceiver {
 
     protected final Dispatcher dispatcher;
 
-    public ForwardClientMessageReceiver(Dispatcher dispatcher) {
+    public GateToServerMessageReceiver(Dispatcher dispatcher) {
 
         this.dispatcher = dispatcher;
     }
@@ -26,10 +26,10 @@ public class ForwardClientMessageReceiver {
      * @param data 消息数据
      * @return 其他服务器转发过来的客户端消息
      */
-    protected ServerMsg.ForwardClientMessage parseClientMessage(byte[] data) {
-        ServerMsg.ForwardClientMessage message = null;
+    protected ServerMsg.GateToServerMessage parseMessage(byte[] data) {
+        ServerMsg.GateToServerMessage message = null;
         try {
-            message = ServerMsg.ForwardClientMessage.parseFrom(data);
+            message = ServerMsg.GateToServerMessage.parseFrom(data);
         }catch (InvalidProtocolBufferException e) {
             log.warn("解析消息异常",e);
         }
@@ -40,10 +40,10 @@ public class ForwardClientMessageReceiver {
      * 自行处理转发过来的客户端消息
      * @param message 其他服务器转发过来的消息
      */
-    protected void process(ServerMsg.ForwardClientMessage message) {
-        RecForwardClientMessageProcessor processor = dispatcher.processor(message.getCsMessage().getMessageId());
+    protected void process(ServerMsg.GateToServerMessage message) {
+        GateToServerMessageProcessor processor = dispatcher.processor(message.getMsgId());
         if (processor == null) {
-            log.warn("不支持的消息,消息号：{}",message.getCsMessage().getMessageId());
+            log.warn("不支持的消息,消息号：{}",message.getMsgId());
         } else {
             try {
                 processor.process(message);

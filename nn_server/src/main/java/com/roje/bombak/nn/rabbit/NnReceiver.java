@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class NnReceiver extends GameServiceReceiver<NnPlayer, NnRoom> {
 
-    public NnReceiver(Dispatcher dispatcher, RoomManager<NnPlayer, NnRoom> roomManager, MessageSender sender) {
-        super(dispatcher, roomManager, sender);
+    public NnReceiver(Dispatcher dispatcher, RoomManager<NnPlayer, NnRoom> roomManager, MessageSender messageSender) {
+        super(dispatcher, roomManager, messageSender);
     }
 
     @RabbitListener(queues = "nn-1")

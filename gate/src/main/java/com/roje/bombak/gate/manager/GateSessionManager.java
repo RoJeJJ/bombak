@@ -19,10 +19,17 @@ public interface GateSessionManager {
 
     /**
      * 根据提供的ID获取session
-     * @param id id
+     * @param sessionId sessionId
      * @return session
      */
-    GateSession getSession(long id);
+    GateSession getSession(String sessionId);
+
+    /**
+     * 获取指定uid的用户session
+     * @param uid uid
+     * @return 用户session
+     */
+    GateSession getSession(long uid);
 
     /**
      * 关闭session

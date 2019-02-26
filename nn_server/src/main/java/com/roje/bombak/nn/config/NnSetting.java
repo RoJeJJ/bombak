@@ -1,6 +1,8 @@
 package com.roje.bombak.nn.config;
 
 import com.roje.bombak.nn.proto.NnMsg;
+import com.roje.bombak.room.common.room.Room;
+import com.roje.bombak.room.common.room.RoomType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -125,10 +127,19 @@ public class NnSetting {
 
     public final boolean aa;
 
+    public final int roomType;
+
     public final NnMsg.RoomSetting setting;
 
-    public NnSetting(NnMsg.RoomSetting setting, boolean cardRoom, NnProperties nnProp) {
+    public NnSetting(NnMsg.RoomSetting setting, NnProperties nnProp) {
         NnMsg.RoomSetting.Builder builder = setting.toBuilder();
+        int rt = setting.getRoomType();
+        if (rt != Room.CARD && rt != Room.GOLD) {
+            log.info("房间类型错误");
+            rt = Room.CARD;
+        }
+        roomType = rt;
+        builder.setRoomType(roomType);
         int person = setting.getSeatSize();
         if (person >= nnProp.getRoomMaxGamer() && person <= nnProp.getRoomMinGamer()) {
             seatSize = person;
@@ -210,7 +221,7 @@ public class NnSetting {
         this.autoStart = start;
         builder.setStartMode(this.autoStart);
         int round = setting.getRoundSize();
-        if (cardRoom) {
+        if (setting.getRoomType() == Room.CARD) {
             if (!nnProp.getRoundFee().containsKey(round)) {
                 int defRound = Collections.min(nnProp.getRoundFee().keySet());
                 log.warn("局数设置错误:{},设置为默认局数{}",round, defRound);

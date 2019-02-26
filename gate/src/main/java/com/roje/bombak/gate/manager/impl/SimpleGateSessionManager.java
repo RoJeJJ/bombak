@@ -21,6 +21,8 @@ public class SimpleGateSessionManager implements GateSessionManager {
 
     private final Map<Long,GateSession> sessions = new ConcurrentHashMap<>();
 
+    private final Map<String,GateSession> sessionIds = new ConcurrentHashMap<>();
+
     private final UserRedisDao userRedisDao;
 
     private final ServiceInfo gateInfo;
@@ -37,18 +39,25 @@ public class SimpleGateSessionManager implements GateSessionManager {
         if (old != null) {
             old.close();
         } else {
+            sessionIds.put(session.id(),session);
             userRedisDao.setGateInfo(uid, gateInfo);
         }
     }
 
     @Override
-    public GateSession getSession(long id) {
-        return sessions.get(id);
+    public GateSession getSession(String id) {
+        return sessionIds.get(id);
+    }
+
+    @Override
+    public GateSession getSession(long uid) {
+        return sessions.get(uid);
     }
 
     @Override
     public void closeSession(GateSession session) {
         sessions.remove(session.uid());
+        sessionIds.remove(session.id());
         userRedisDao.removeGateInfo(session.uid());
         session.close();
     }

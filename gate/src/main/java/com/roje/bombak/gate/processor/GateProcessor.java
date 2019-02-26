@@ -17,5 +17,5 @@ public interface GateProcessor {
      * @param message 消息包
      * @throws Exception 处理异常
      */
-    void process(GateSession session, ServerMsg.C2SMessage message) throws Exception;
+    void process(GateSession session, ServerMsg.ClientToGateMessage message) throws Exception;
 }

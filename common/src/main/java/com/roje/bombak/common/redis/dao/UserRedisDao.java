@@ -73,4 +73,6 @@ public interface UserRedisDao {
     void setInitialId();
 
     Long getUserId();
+
+    boolean minusGoldIfEnough(long uid, int gold);
 }

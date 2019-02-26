@@ -14,28 +14,33 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class GateReplyClientMessageReceiver {
+public class ServerToGateMessageReceiver {
 
     private final GateSessionManager serverManager;
 
 
-    public GateReplyClientMessageReceiver(GateSessionManager serverManager) {
+    public ServerToGateMessageReceiver(GateSessionManager serverManager) {
         this.serverManager = serverManager;
     }
 
     @RabbitListener(queues = "gate-1")
     public void onMessage(byte[] data) {
-        ServerMsg.ReplyClientMessage message;
+        ServerMsg.ServerToGateMessage message;
         try {
-            message = ServerMsg.ReplyClientMessage.parseFrom(data);
+            message = ServerMsg.ServerToGateMessage.parseFrom(data);
         } catch (InvalidProtocolBufferException e) {
             log.warn("消息解析异常",e);
             return;
         }
 
-        GateSession s = serverManager.getSession(message.getUid());
+        GateSession s = serverManager.getSession(message.getSessionId());
         if (s != null) {
-            s.send(message.getScMessage());
+            ServerMsg.GateToClientMessage.Builder builder = ServerMsg.GateToClientMessage.newBuilder();
+            builder.setMsgType(message.getMsgType())
+                    .setMsgId(message.getMsgId())
+                    .setErrCode(message.getErrCode())
+                    .setData(message.getData());
+            s.send(builder.build());
         }
     }
 }

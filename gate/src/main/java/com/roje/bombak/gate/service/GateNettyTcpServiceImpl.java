@@ -89,7 +89,7 @@ public class GateNettyTcpServiceImpl implements ServerService {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast(new ProtobufVarint32FrameDecoder())
-                                .addLast(new ProtobufDecoder(ServerMsg.C2SMessage.getDefaultInstance()))
+                                .addLast(new ProtobufDecoder(ServerMsg.ClientToGateMessage.getDefaultInstance()))
                                 .addLast(new ProtobufVarint32LengthFieldPrepender())
                                 .addLast(new ProtobufEncoder())
                                 .addLast("log", new LoggingHandler(LogLevel.INFO))

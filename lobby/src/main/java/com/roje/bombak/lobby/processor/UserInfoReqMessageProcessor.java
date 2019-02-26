@@ -1,7 +1,7 @@
 package com.roje.bombak.lobby.processor;
 
 import com.roje.bombak.common.annotation.Message;
-import com.roje.bombak.common.processor.RecForwardClientMessageProcessor;
+import com.roje.bombak.common.processor.GateToServerMessageProcessor;
 import com.roje.bombak.common.model.User;
 import com.roje.bombak.common.redis.dao.UserRedisDao;
 import com.roje.bombak.common.utils.MessageSender;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Message(id = LobbyConstant.USER_INFO_REQ)
-public class UserInfoReqMessageProcessor implements RecForwardClientMessageProcessor {
+public class UserInfoReqMessageProcessor implements GateToServerMessageProcessor {
 
     private final UserRedisDao userRedisDao;
 
@@ -31,8 +31,8 @@ public class UserInfoReqMessageProcessor implements RecForwardClientMessageProce
 
 
     @Override
-    public void process(ServerMsg.ForwardClientMessage message) {
-        User user = userRedisDao.getUser(message.getUid());
+    public void process(ServerMsg.GateToServerMessage message) {
+        User user = userRedisDao.getUser(message.getUserId());
         if (user != null) {
             LobbyMsg.UserInfoRes.Builder builder = LobbyMsg.UserInfoRes.newBuilder();
             builder.setId(user.id())
@@ -46,7 +46,7 @@ public class UserInfoReqMessageProcessor implements RecForwardClientMessageProce
             if (user.getHeadImg() != null) {
                 builder.setHeadImg(user.getHeadImg());
             }
-            messageSender.replyClientMsg(message,LobbyConstant.USER_INFO_RES,builder.build());
+            messageSender.sendMsgToGate(message,LobbyConstant.USER_INFO_RES,builder.build());
         }
     }
 }

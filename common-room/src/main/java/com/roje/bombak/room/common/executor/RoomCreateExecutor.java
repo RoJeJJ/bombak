@@ -10,11 +10,11 @@ import io.netty.util.concurrent.EventExecutor;
  * @version 1.0
  * @date 2019/1/8
  **/
-public class RoomCreateExecutorGroup {
+public class RoomCreateExecutor {
 
     private final EventExecutor eventExecutor;
 
-    public RoomCreateExecutorGroup() {
+    public RoomCreateExecutor() {
         this.eventExecutor = new DefaultEventExecutor(new NamedThreadFactory("cr"));
     }
 

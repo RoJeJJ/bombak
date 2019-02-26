@@ -7,23 +7,25 @@ package com.roje.bombak.room.common.constant;
  **/
 public interface RoomConstant {
 
+    int ROOM_CMD = 3;
+
+    int ROOM_SERVICE = 4;
+
     interface Cmd {
 
         //房间外的请求
 
-        int CREATE_CARD_ROOM_REQ = 3001;
+        int CREATE_ROOM_REQ = 3001;
 
-        int CREATE_GOLD_ROOM_REQ = 3002;
+        int CREATE_ROOM_RES = 3002;
 
-        int CREATE_ROOM_RES = 3003;
+        int JOIN_ROOM_REQ = 3003;
 
-        int JOIN_ROOM_REQ = 3004;
-
-        int JOIN_ROOM_RES = 3005;
+        int JOIN_ROOM_RES = 3004;
 
         //房间中的请求
 
-        int ROOM_CMD = 3100;
+//        int ROOM_CMD = 3100;
 
         int DISBAND_CARD_ROOM_REQ = 3101;
 
@@ -44,6 +46,10 @@ public interface RoomConstant {
         int GET_UP_REQ = 3109;
 
         int GET_UP_RES = 3110;
+
+        int START_GAME_REQ = 3111;
+
+        int START_GAME_RES = 3112;
     }
 
     interface RedisConstant {
@@ -61,13 +67,15 @@ public interface RoomConstant {
 
         int REJOIN = 3201;
 
-        int PLAYER_OFFLINE = 3202;
+        int ONLINE = 3202;
 
-        int USER_ROOM = 3203;
+        int PLAYER_OFFLINE = 3203;
 
-        int ROOM_CLOSE = 3204;
+        int USER_ROOM = 3204;
 
-        int PLAYER_EXIT = 3205;
+        int ROOM_CLOSE = 3205;
+
+        int PLAYER_EXIT = 3206;
     }
 
     interface ErrorCode {

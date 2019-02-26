@@ -30,6 +30,7 @@ eureka:
     prefer-ip-address: true
     metadata-map:
       id: 1
+      roomSize: 0
   client:
     registry-fetch-interval-seconds: 5
     service-url:
@@ -38,7 +39,6 @@ room:
   executor-room-size: 5
   max-room-size: 100
   room-executor-size: 8
-  user-executor-size: 3
 nn:
   room-min-gamer: 5
   room-max-gamer: 10
@@ -50,10 +50,10 @@ nn:
     - 20
   multi-bet-limit: 5
   multi-rush-limit: 10
-  bet-time: 20
-  rush-time: 10
-  check-time: 10
   round-fee:
     10: 1
     20: 2
     30: 3
+  bet-second-time: 20
+  rush-second-time: 10
+  check-second-time: 10

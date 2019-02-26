@@ -1,6 +1,8 @@
 package com.roje.bombak.room.common.player;
 
 import com.google.protobuf.Message;
+import com.roje.bombak.common.eureka.ServiceInfo;
+import com.roje.bombak.common.model.User;
 
 /**
  * @author pc
@@ -9,58 +11,37 @@ import com.google.protobuf.Message;
  **/
 public interface Player {
 
-    long uid();
-
-    void setNickname(String nickname);
-
-    String getNickname();
-
-    void setHeadImg(String headImg);
-
-    String getHeadImg();
-
-    void setRoomCard(long roomCard);
-
-    long getRoomCard();
-
-    void setGold(long gold);
-
-    long getGold();
-
-    int getSeat();
-
-    void setSeat(int seat);
-
-    void setOffline(boolean bool);
-
-    boolean isOffline();
+    long getUid();
 
     boolean isExit();
 
     void setExit(boolean exit);
 
-    String getServiceType();
+    boolean isOffline();
 
-    void setServiceType(String type);
+    void setOffline(boolean offline);
 
-    String getServiceId();
+    int getSeat();
 
-    void setServiceId(String gateId);
+    void setSeat(int seat);
 
-    boolean isReady();
+    User getUser();
 
-    void setReady(boolean ready);
+    void setUser(User user);
+
+    String getSessionId();
+
+    void setSessionId(String sessionId);
+
+    ServiceInfo getGateInfo();
+
+    void setGateInfo(ServiceInfo gateInfo);
+
+    Message playerData(Player player);
 
     boolean isInGame();
 
-    void setVoteStatus(VoteStatus status);
+    void setVoteStatus(VoteStatus wait);
 
     VoteStatus getVoteStatus();
-
-    /**
-     * protobuf序列化的玩家
-     * @param p 接收玩家数据的玩家
-     * @return 玩家数据
-     */
-    Message playerData(Player p);
 }

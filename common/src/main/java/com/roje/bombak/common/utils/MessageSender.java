@@ -3,7 +3,7 @@ package com.roje.bombak.common.utils;
 import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import com.roje.bombak.common.eureka.ServiceInfo;
-import com.roje.bombak.common.constant.GlobalConstant;
+import com.roje.bombak.common.constant.Constant;
 import com.roje.bombak.common.proto.ServerMsg;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.cloud.client.ServiceInstance;
@@ -27,67 +27,52 @@ public class MessageSender {
     /**
      * 广播消息
      */
-    public void broadCastMessage(long uid, int messageId) {
-        ServerMsg.ServerBroadcastMessage.Builder builder = ServerMsg.ServerBroadcastMessage.newBuilder();
-        builder.setUid(uid)
-                .setMessageId(messageId)
-                .setServerType(serviceInfo.getServiceType())
-                .setServerId(serviceInfo.getServiceId());
-        amqpTemplate.convertAndSend(GlobalConstant.BROADCAST_EXCHANGE_NAME,builder.build().toByteArray());
+    public void allServerMsg(int msgType, int messageId,Message message) {
+        ServerMsg.ServerToServerMessage.Builder builder = ServerMsg.ServerToServerMessage.newBuilder();
+        builder.setMsgType(msgType)
+                .setMsgId(messageId);
+        if (message != null) {
+            builder.setData(Any.pack(message));
+        }
+        amqpTemplate.convertAndSend(Constant.BROADCAST_EXCHANGE_NAME,builder.build().toByteArray());
     }
 
-    /**
-     * 转发回复给客户端的消息
-     */
-    public void replyClientMsg(ServerMsg.ForwardClientMessage message, int messageId, Message proto) {
-        ServerMsg.S2CMessage sc = scMsg(messageId,proto);
-        ServerMsg.ReplyClientMessage replyMsg = replyClientMsg(sc,message.getUid());
-        forward(message,replyMsg);
+    public void sendMsgToGate(ServerMsg.GateToServerMessage gateMsg, int messageId, Message message) {
+        ServerMsg.ServerToGateMessage.Builder builder = ServerMsg.ServerToGateMessage.newBuilder();
+        builder.setMsgType(gateMsg.getMsgType())
+                .setMsgId(messageId)
+                .setSessionId(gateMsg.getSessionId())
+                .setData(Any.pack(message));
+        String gate = gateMsg.getServiceType() + "-" + gateMsg.getServiceId();
+        amqpTemplate.convertAndSend(gate,message);
     }
 
-    /**
-     *转发一个错误消息给客户端
-     */
-    public void replyClientErrMsg(ServerMsg.ForwardClientMessage message, int err) {
-        ServerMsg.S2CMessage sc = scErrMsg(err);
-        ServerMsg.ReplyClientMessage replyMsg = replyClientMsg(sc,message.getUid());
-        forward(message,replyMsg);
+    public void sendErrMsgToGate(ServerMsg.GateToServerMessage message, int err) {
+        ServerMsg.ServerToGateMessage.Builder builder = ServerMsg.ServerToGateMessage.newBuilder();
+        builder.setErrCode(err);
+        String gate = message.getServiceType() + "-" + message.getServiceId();
+        amqpTemplate.convertAndSend(gate,message);
     }
 
-    public ServerMsg.S2CMessage scMsg(int messageId,Message data) {
-        ServerMsg.S2CMessage.Builder scBuilder = ServerMsg.S2CMessage.newBuilder();
-        scBuilder.setTimestamp(System.currentTimeMillis())
-                .setMessageId(messageId)
+    public ServerMsg.GateToClientMessage scMsg(int msgType,int msgId,Message data) {
+        ServerMsg.GateToClientMessage.Builder builder = ServerMsg.GateToClientMessage.newBuilder();
+        builder.setMsgType(msgType)
+                .setMsgId(msgId)
                 .setData(Any.pack(data));
-        return scBuilder.build();
-    }
-
-    public ServerMsg.S2CMessage scMsg(int messageId) {
-        ServerMsg.S2CMessage.Builder scBuilder = ServerMsg.S2CMessage.newBuilder();
-        scBuilder.setTimestamp(System.currentTimeMillis())
-                .setMessageId(messageId);
-        return scBuilder.build();
-    }
-
-    public ServerMsg.S2CMessage scErrMsg(int err) {
-        ServerMsg.S2CMessage.Builder builder = ServerMsg.S2CMessage.newBuilder();
-        builder.setTimestamp(System.currentTimeMillis())
-                .setErrorCode(err);
         return builder.build();
     }
 
-    protected ServerMsg.ReplyClientMessage replyClientMsg(ServerMsg.S2CMessage sc,long uid) {
-        ServerMsg.ReplyClientMessage.Builder builder = ServerMsg.ReplyClientMessage.newBuilder();
-        builder.setScMessage(sc)
-                .setUid(uid)
-                .setServerType(serviceInfo.getServiceType())
-                .setServerId(serviceInfo.getServiceId());
+    public ServerMsg.GateToClientMessage scMsg(int msgType, int messageId) {
+        ServerMsg.GateToClientMessage.Builder builder = ServerMsg.GateToClientMessage.newBuilder();
+        builder.setMsgType(msgType)
+                .setMsgId(messageId);
         return builder.build();
     }
 
-    private void forward(ServerMsg.ForwardClientMessage message, ServerMsg.ReplyClientMessage reply) {
-        String routeKey = message.getServerType() + "-" + message.getServerId();
-        amqpTemplate.convertAndSend(routeKey,reply.toByteArray());
+    public ServerMsg.GateToClientMessage scErrMsg(int err) {
+        ServerMsg.GateToClientMessage.Builder builder = ServerMsg.GateToClientMessage.newBuilder();
+        builder.setErrCode(err);
+        return builder.build();
     }
 
     public void amqpMessage(ServiceInfo serviceInfo,byte[] data) {

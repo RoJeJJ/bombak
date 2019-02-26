@@ -7,6 +7,8 @@ package com.roje.bombak.gate.constant;
  **/
 public interface GateConstant {
 
+    int GATE_MSG = 1;
+
     interface Cmd {
 
         int LOGIN_REQ = 1001;

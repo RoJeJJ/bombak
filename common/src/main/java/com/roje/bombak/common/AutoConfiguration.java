@@ -10,7 +10,6 @@ import com.roje.bombak.common.eureka.ServiceInfo;
 import com.roje.bombak.common.redis.dao.UserRedisDao;
 import com.roje.bombak.common.redis.dao.impl.UserRedisDaoImpl;
 import com.roje.bombak.common.utils.MessageSender;
-import com.roje.bombak.common.processor.RecForwardClientMessageProcessor;
 import com.roje.bombak.common.processor.Dispatcher;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.Redisson;
@@ -108,7 +107,7 @@ public class AutoConfiguration {
     public ServiceInfo serviceInfo(ApplicationInfoManager infoManager) {
         ServiceInfo info = new ServiceInfo();
         InstanceInfo instanceInfo = infoManager.getInfo();
-        info.setServiceType(instanceInfo.getAppName().toLowerCase());
+        info.setServiceType(instanceInfo.getAppName());
         info.setIp(instanceInfo.getIPAddr());
         info.setPort(instanceInfo.getPort());
         Map<String,String> meta = instanceInfo.getMetadata();
@@ -118,7 +117,7 @@ public class AutoConfiguration {
 
     @ConditionalOnMissingBean(MessageSender.class)
     @Bean
-    public MessageSender roomMessageSender(ServiceInfo serviceInfo,AmqpTemplate amqpTemplate) {
+    public MessageSender messageSender(ServiceInfo serviceInfo,AmqpTemplate amqpTemplate) {
         return new MessageSender(serviceInfo,amqpTemplate);
     }
 

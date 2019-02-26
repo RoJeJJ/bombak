@@ -13,8 +13,6 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "room")
 public class RoomProperties {
 
-    private int userExecutorSize = 5;
-
     private int executorRoomSize = 4;
 
     private int maxRoomSize = 100;
@@ -22,6 +20,16 @@ public class RoomProperties {
     private int roomExecutorSize = 3;
 
     private int roomMaxPlayers = 100;
+
+    private int voteSecondTime = 60;
+
+    public int getVoteSecondTime() {
+        return voteSecondTime;
+    }
+
+    public void setVoteSecondTime(int voteTime) {
+        this.voteSecondTime = voteTime;
+    }
 
     private Map<Integer,Integer> roundCardMap = new HashMap<>();
 
@@ -41,16 +49,6 @@ public class RoomProperties {
 
     public void setMaxRoomSize(int maxRoomSize) {
         this.maxRoomSize = maxRoomSize;
-    }
-
-    public int getUserExecutorSize() {
-        return userExecutorSize;
-    }
-
-    public void setUserExecutorSize(int userExecutorSize) {
-        if (userExecutorSize > 0) {
-            this.userExecutorSize = userExecutorSize;
-        }
     }
 
     public int getRoomExecutorSize() {

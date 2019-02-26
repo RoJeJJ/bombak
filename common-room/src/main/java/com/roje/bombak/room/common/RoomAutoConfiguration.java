@@ -1,11 +1,13 @@
 package com.roje.bombak.room.common;
 
+import com.netflix.appinfo.ApplicationInfoManager;
 import com.roje.bombak.common.eureka.ServiceInfo;
 import com.roje.bombak.room.common.config.RoomProperties;
-import com.roje.bombak.room.common.executor.RoomCreateExecutorGroup;
 import com.roje.bombak.room.common.executor.JoinRoomExecutorGroup;
+import com.roje.bombak.room.common.executor.RoomCreateExecutor;
 import com.roje.bombak.room.common.manager.RoomIdGenerator;
 import com.roje.bombak.room.common.manager.impl.RoomIdGeneratorImpl;
+import com.roje.bombak.room.common.rabbit.RoomInstanceService;
 import com.roje.bombak.room.common.redis.RoomRedisDao;
 import com.roje.bombak.room.common.redis.RoomRedisDaoImpl;
 import com.roje.bombak.room.common.utils.RoomMessageSender;
@@ -38,4 +40,13 @@ public class RoomAutoConfiguration {
         return new RoomMessageSender(serviceInfo,amqpTemplate);
     }
 
+    @Bean
+    public RoomCreateExecutor roomCreateExecutor() {
+        return new RoomCreateExecutor();
+    }
+
+    @Bean
+    public RoomInstanceService roomInstanceService(ApplicationInfoManager manager) {
+        return new RoomInstanceService(manager);
+    }
 }

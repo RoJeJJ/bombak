@@ -6,7 +6,7 @@ package com.roje.bombak.room.common.proto;
 //创建房间
 message CreateRoomReq {
     string gameName = 1;
-    bytes config = 2;
+    google.protobuf.Any setting = 2;
 }
 
 //创建房间回复
@@ -32,11 +32,11 @@ message ForceDisRoomReq {
 message ForceDisRoomRes {}
 
 //申请解散房卡房间
-message DisCardRoomReq {}
+message DisbandRoomReq {}
 
-message DisCardRoomRes {
+message DisbandRoomRes {
     int64 uid = 1;
-    int32 time = 2;
+    int64 time = 2;
     repeated DisbandData disbandData = 3;
 }
 
@@ -57,7 +57,7 @@ message RoomClosed {
     string reason = 1;
 }
 
-message ReJoin {
+message PlayerInfo {
     int64 uid = 1;
 }
 
@@ -73,14 +73,4 @@ message SitDownReq {
 
 message SitDownRes {
     google.protobuf.Any playerData = 1;
-}
-
-message GetUpReq {}
-
-message GetUpRes {
-    int64 uid = 1;
-}
-
-message PlayerExit {
-    int64 uid = 1;
 }
